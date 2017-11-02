@@ -165,8 +165,8 @@ def train():
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
             print("epoch: %d, batch: %d, g_loss: %f, d_loss: %f" % (epoch, index, g_loss, d_loss))
 
-        generator.save_weights("generator.h5")
-        discriminator.save_weights("discriminator.h5")
+        generator.save_weights(g_weights_path)
+        discriminator.save_weights(d_weights_path)
 
 if __name__ == "__main__":
     train()
