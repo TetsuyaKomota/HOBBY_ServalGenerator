@@ -72,7 +72,7 @@ def discriminator_model():
     model.add(Activation("sigmoid"))
     return model
 
-def combine_images(generated_images, epoch, batch):
+def combine_images(generated_images, epoch, batch, path=""):
     total = generated_images.shape[0]
     cols = int(math.sqrt(total))
     rows = math.ceil(float(total)/cols)
@@ -88,7 +88,10 @@ def combine_images(generated_images, epoch, batch):
     combined_image = combined_image*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
         os.mkdir(GENERATED_IMAGE_PATH)
-    cv2.imwrite(GENERATED_IMAGE_PATH+"%04d_%04d.png" % (epoch, batch), combined_image.astype(np.uint8))
+    imgPath  = GENERATED_IMAGE_PATH
+    imgPath += path
+    imgPath += "%04d_%04d.png" % (epoch, batch)
+    cv2.imwrite(imgPath, combined_image.astype(np.uint8))
 
     return combined_image
 
@@ -153,11 +156,6 @@ def train():
             n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
 
         for index in range(num_batches):
-            # 生成画像を出力
-            if index % 700 == 0:
-                sampled_images = generator.predict(n_sample, verbose=0)
-                image = combine_images(sampled_images, epoch, index)
-
             image_batch = X_train[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
             generated_images = generator.predict(n_learn, verbose=0)
 
@@ -169,6 +167,13 @@ def train():
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
             print("epoch: %d, batch: %d, g_loss: %f, d_loss: %f" % (epoch, index, g_loss, d_loss))
+
+            # 生成画像を出力
+            if index % 700 == 0:
+                sampled_images = generator.predict(n_sample, verbose=0)
+                image = combine_images(sampled_images, epoch, index, path="output/")
+                image = combine_images(generated_images, epoch, index, path="learned/")
+
 
         generator.save_weights(g_weights_path)
         discriminator.save_weights(d_weights_path)
