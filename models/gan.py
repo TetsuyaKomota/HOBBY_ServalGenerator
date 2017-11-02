@@ -11,7 +11,7 @@ import numpy as np
 import os
 from keras.datasets import mnist
 from keras.optimizers import Adam
-from models import FriendsLoader
+import models.FriendsLoader as FriendsLoader
 import cv2
 import dill
 
@@ -72,7 +72,7 @@ def discriminator_model():
     model.add(Activation("sigmoid"))
     return model
 
-def combine_images(generated_images):
+def combine_images(generated_images, epoch, batch):
     total = generated_images.shape[0]
     cols = int(math.sqrt(total))
     rows = math.ceil(float(total)/cols)
@@ -88,7 +88,7 @@ def combine_images(generated_images):
     combined_image = combined_image*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
         os.mkdir(GENERATED_IMAGE_PATH)
-    cv2.imwrite(GENERATED_IMAGE_PATH+"%04d_%04d.png" % (epoch, index), combined_image.astype(np.uint8))
+    cv2.imwrite(GENERATED_IMAGE_PATH+"%04d_%04d.png" % (epoch, batch), combined_image.astype(np.uint8))
 
     return combined_image
 
@@ -150,7 +150,7 @@ def train():
             # 生成画像を出力
             if index % 700 == 0:
                 sampled_images = generator.predict(n_sample, verbose=0)
-                image = combine_images(sampled_images)
+                image = combine_images(sampled_images, epoch, index)
 
             n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
             image_batch = X_train[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
