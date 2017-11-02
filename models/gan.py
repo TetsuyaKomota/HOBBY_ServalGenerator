@@ -146,13 +146,18 @@ def train():
             dill.dump(n_sample, f)
 
     for epoch in range(NUM_EPOCH):
+        # 学習に使用するノイズを取得
+        # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
+        # 試しに 100 エポックごとにノイズを変えてみる
+        if epoch % 100 == 0:
+            n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
+
         for index in range(num_batches):
             # 生成画像を出力
             if index % 700 == 0:
                 sampled_images = generator.predict(n_sample, verbose=0)
                 image = combine_images(sampled_images, epoch, index)
 
-            n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
             image_batch = X_train[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
             generated_images = generator.predict(n_learn, verbose=0)
 
