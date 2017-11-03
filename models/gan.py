@@ -72,18 +72,24 @@ def discriminator_model():
     model.add(Activation("sigmoid"))
     return model
 
-def combine_images(generated_images, epoch, batch, path=""):
-    total = generated_images.shape[0]
+# 画像を出力する
+# 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
+# 学習画像と出力画像は同じサイズ，枚数を前提
+def combine_images(learned, generated, epoch, batch, path=""):
+    total = generated.shape[0]
     cols = int(math.sqrt(total))
     rows = math.ceil(float(total)/cols)
-    width, height = generated_images.shape[1:3]
-    combined_image = np.zeros((height*rows, width*cols, 3),dtype=generated_images.dtype)
+    width, height = generated.shape[1:3]
+    combined_image = np.zeros((height*rows, width*cols*2, 3),dtype=generated.dtype)
 
-    for index, image in enumerate(generated_images):
+    for index in range(len(generated)):
+        l = learned[index]
+        g = generated[index]
         i = int(index/cols)
         j = index % cols
         for k in range(3):
-            combined_image[width*i:width*(i+1), height*j:height*(j+1), k] = image[:, :, k]
+            combined_image[width*i:width*(i+1), height*j:height*(j+1), k] = l[:, :, k]
+            combined_image[width*(col+i):width*(col+i+1), height*j:height*(j+1), k] = g[:, :, k]
 
     combined_image = combined_image*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
@@ -171,8 +177,8 @@ def train():
             # 生成画像を出力
             if index % 700 == 0:
                 sampled_images = generator.predict(n_sample, verbose=0)
-                image = combine_images(sampled_images, epoch, index, path="output/")
-                image = combine_images(generated_images, epoch, index, path="learned/")
+                combine_images(generated_images, sampled_images, epoch, index, path="output/")
+                # combine_images(generated_images, epoch, index, path="learned/")
 
 
         generator.save_weights(g_weights_path)
