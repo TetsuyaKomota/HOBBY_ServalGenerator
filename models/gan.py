@@ -89,7 +89,7 @@ def combine_images(learned, generated, epoch, batch, path=""):
         j = index % cols
         for k in range(3):
             combined_image[width*i:width*(i+1), height*j:height*(j+1), k] = l[:, :, k]
-            combined_image[width*(col+i):width*(col+i+1), height*j:height*(j+1), k] = g[:, :, k]
+            combined_image[width*i:width*(i+1), height*(rows+j):height*(rows+j+1), k] = g[:, :, k]
 
     combined_image = combined_image*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
@@ -158,7 +158,7 @@ def train():
         # 学習に使用するノイズを取得
         # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
         # 試しに 100 エポックごとにノイズを変えてみる
-        if epoch % 100 == 0:
+        if epoch % 1 == 0:
             n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
 
         for index in range(num_batches):
