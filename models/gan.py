@@ -158,7 +158,7 @@ def train():
         # 学習に使用するノイズを取得
         # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
         # 試しに 100 エポックごとにノイズを変えてみる
-        if epoch % 1 == 0:
+        if epoch % 10 == 0:
             n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
 
         for index in range(num_batches):
