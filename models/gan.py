@@ -18,6 +18,7 @@ import dill
 from setting import IMG_SIZE
 from setting import BATCH_SIZE
 from setting import NUM_EPOCH
+from setting import SPAN_UPDATE_NOIZE
 
 from setting import G_LR
 from setting import G_BETA
@@ -65,6 +66,7 @@ def discriminator_model():
     model.add(Conv2D(512, (5, 5), strides=(2, 2)))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
+    model.add(Dropout(0.5))
     model.add(Dense(100))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
@@ -158,7 +160,7 @@ def train():
         # 学習に使用するノイズを取得
         # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
         # 試しに 100 エポックごとにノイズを変えてみる
-        if epoch % 10 == 0:
+        if epoch % SPAN_UPDATE_NOIZE == 0:
             n_learn = np.array([np.random.uniform(-1, 1, 100) for _ in range(BATCH_SIZE)])
 
         for index in range(num_batches):
