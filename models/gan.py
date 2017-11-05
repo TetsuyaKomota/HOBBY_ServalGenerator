@@ -82,7 +82,7 @@ def combine_images(learned, generated, epoch, batch, path="output/"):
     cols   = int(math.sqrt(total))
     rows   = math.ceil(float(total)/cols)
     w, h   = generated.shape[1:3]
-    size   = (height*rows, width*cols*2, 3)
+    size   = (h*rows, w*cols*2, 3)
     output = np.zeros(size, dtype=generated.dtype)
 
     for index in range(len(generated)):
