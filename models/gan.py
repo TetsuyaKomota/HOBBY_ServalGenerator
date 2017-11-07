@@ -16,6 +16,7 @@ import cv2
 import dill
 
 from setting import IMG_SIZE
+from setting import NOIZE_SIZE
 from setting import BATCH_SIZE
 from setting import NUM_EPOCH
 from setting import SPAN_UPDATE_NOIZE
@@ -33,7 +34,7 @@ GENERATED_IMAGE_PATH = "tmp/"
 def generator_model():
     layerSize = int(IMG_SIZE/16)
     model = Sequential()
-    model.add(Dense(layerSize*layerSize*512, input_shape=(100,)))
+    model.add(Dense(layerSize*layerSize*512, input_shape=(NOIZE_SIZE,)))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
     model.add(Reshape((layerSize, layerSize, 512)))
@@ -67,7 +68,7 @@ def discriminator_model():
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(100))
+    model.add(Dense(NOIZE_SIZE))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
     model.add(Dense(1))
@@ -117,7 +118,7 @@ def loadorGenerateNoizeSet(dillName):
         with open(n_sample_path, "rb") as f:
             n_sample = dill.load(f)
     else:
-        n_sample = makeNoize(100, BATCH_SIZE)
+        n_sample = makeNoize(NOIZE_SIZE, BATCH_SIZE)
         with open(n_sample_path, "wb") as f:
             dill.dump(n_sample, f)
 
