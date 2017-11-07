@@ -77,22 +77,22 @@ def discriminator_model():
 # 画像を出力する
 # 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
 # 学習画像と出力画像は同じサイズ，枚数を前提
-def combine_images(learned, generated, epoch, batch, path="output/"):
-    total  = generated.shape[0]
+def combine_images(sample, learn, epoch, batch, path="output/"):
+    total  = sample.shape[0]
     cols   = int(math.sqrt(total))
     rows   = math.ceil(float(total)/cols)
-    w, h   = generated.shape[1:3]
-    size   = (h*rows, w*cols*2, 3)
-    output = np.zeros(size, dtype=generated.dtype)
+    w, h   = sample.shape[1:3]
+    size   = (h*rows*2, w*cols*2, 3)
+    output = np.zeros(size, dtype=sample.dtype)
 
-    for index in range(len(generated)):
-        l = learned[index]
-        g = generated[index]
-        i = int(index/cols)
-        j = index % cols
+    for n in range(len(sample)):
+        i = int(n/cols)
+        j = n % cols
         for k in range(3):
-            output[w*i:w*(i+1), h*j:h*(j+1), k] = l[:, :, k]
-            output[w*i:w*(i+1), h*(rows+j):h*(rows+j+1), k] = g[:, :, k]
+            output[w*i:w*(i+1), h*j:h*(j+1), k] = sample[n][:, :, k]
+            output[w*i:w*(i+1), h*(rows+j):h*(rows+j+1), k] = learn[0][n][:, :, k]
+            output[w*(cols+i):w*(cols+i+1), h*j:h*(j+1), k] = learn[1][n][:, :, k]
+            output[w*(cols+i):w*(cols+i+1), h*(rows+j):h*(rows+j+1), k] = learn[2][n][:, :, k]
 
     output = output*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
@@ -108,6 +108,21 @@ def combine_images(learned, generated, epoch, batch, path="output/"):
 # 主に generator に渡す入力を作るのに使用する
 def makeNoize(dim, num):
     return np.array([np.random.uniform(-1, 1, dim) for _ in range(num)])
+
+# ノイズのセットをロード，ない場合は生成してセーブする
+def loadorGenerateNoizeSet(dillName):
+    n_sample_path = SAVE_NOIZE_PATH + dillName
+
+    if os.path.exists(n_sample_path):
+        with open(n_sample_path, "rb") as f:
+            n_sample = dill.load(f)
+    else:
+        n_sample = makeNoize(100, BATCH_SIZE)
+        with open(n_sample_path, "wb") as f:
+            dill.dump(n_sample, f)
+
+    num_batches = int(Xg.shape[0] / BATCH_SIZE)
+    return n_sample
 
 def train():
     (Xg, _), (_, _) = FriendsLoader.load_data()
@@ -152,25 +167,23 @@ def train():
 
     # 出力画像用のノイズを生成
     # 画像の成長過程を見たいので，出力画像には常に同じノイズを使う
-    n_sample_path = SAVE_NOIZE_PATH + "forSample.dill"
-
-    if os.path.exists(n_sample_path):
-        with open(n_sample_path, "rb") as f:
-            n_sample = dill.load(f)
-    else:
-        n_sample = makeNoize(100, BATCH_SIZE)
-        with open(n_sample_path, "wb") as f:
-            dill.dump(n_sample, f)
-
-    num_batches = int(Xg.shape[0] / BATCH_SIZE)
+    n_sample = loadorGenerateNoizeSet("forSample.dill")
     print("Number of batches:", num_batches)
+
+    # 学習用のノイズを生成
+    # 3セットの学習ノイズを順番に学習させてみたい
+    n_learnList = []
+    n_learnList.append(loadorGenerateNoizeSet("forLearn_1.dill"))
+    n_learnList.append(loadorGenerateNoizeSet("forLearn_2.dill"))
+    n_learnList.append(loadorGenerateNoizeSet("forLearn_3.dill"))
 
     for epoch in range(NUM_EPOCH):
         # 学習に使用するノイズを取得
         # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
         # 試しに 100 エポックごとにノイズを変えてみる
         if epoch % SPAN_UPDATE_NOIZE == 0:
-            n_learn = makeNoize(100, BATCH_SIZE)
+            nextIdx = int(epoch/100) % 3
+            n_learn = n_learnList[nextIdx]
 
         for index in range(num_batches):
             image_batch      = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
@@ -188,8 +201,12 @@ def train():
 
             # 生成画像を出力
             if index % 700 == 0:
-                samples = generator.predict(n_sample, verbose=0)
-                combine_images(generated_images, samples, epoch, index)
+                s = generator.predict(n_sample, verbose=0)
+                l = []
+                l.append(generator.predict(n_learnList[0], verbose=0))
+                l.append(generator.predict(n_learnList[1], verbose=0))
+                l.append(generator.predict(n_learnList[2], verbose=0))
+                combine_images(s, l, epoch, index)
 
         generator.save_weights(g_weights_path)
         discriminator.save_weights(d_weights_path)
