@@ -121,7 +121,6 @@ def loadorGenerateNoizeSet(dillName):
         with open(n_sample_path, "wb") as f:
             dill.dump(n_sample, f)
 
-    num_batches = int(Xg.shape[0] / BATCH_SIZE)
     return n_sample
 
 def train():
