@@ -167,7 +167,7 @@ def train():
     # 出力画像用のノイズを生成
     # 画像の成長過程を見たいので，出力画像には常に同じノイズを使う
     n_sample = loadorGenerateNoizeSet("forSample.dill")
-    num_batches = int(X_train.shape[0] / BATCH_SIZE)
+    num_batches = int(Xg.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
     
     # 学習用のノイズを生成
