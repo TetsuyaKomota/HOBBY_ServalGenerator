@@ -200,8 +200,10 @@ def train():
             print(text % (epoch, index, g_loss, d_loss))
 
             # discriminator の結果を出力してみる
-            print("g_res:" + str(dcgan.predict(Xg)))
-            print("d_res:" + str(discriminator.predict(Xd)))
+            Zg = [int(i[0]>0.5) for i in discriminator.predict(generated_images)]
+            Zd = [int(i[0]>0.5) for i in discriminator.predict(image_batch)]
+            print("g_res:" + str(Zg[:20]))
+            print("d_res:" + str(Zd[:20]))
 
             # 生成画像を出力
             if index % 700 == 0:
