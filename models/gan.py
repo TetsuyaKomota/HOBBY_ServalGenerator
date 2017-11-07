@@ -182,7 +182,7 @@ def train():
         # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
         # 試しに 100 エポックごとにノイズを変えてみる
         if epoch % SPAN_UPDATE_NOIZE == 0:
-            nextIdx = int(epoch/100) % 3
+            nextIdx = int(epoch/SPAN_UPDATE_NOIZE) % 3
             n_learn = n_learnList[nextIdx]
 
         for index in range(num_batches):
@@ -198,6 +198,10 @@ def train():
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
             text   = "epoch: %d, batch: %d, g_loss: %f, d_loss: %f"
             print(text % (epoch, index, g_loss, d_loss))
+
+            # discriminator の結果を出力してみる
+            print("g_res:" + str(dcgan.predict(Xg)))
+            print("d_res:" + str(discriminator.predict(Xd)))
 
             # 生成画像を出力
             if index % 700 == 0:
