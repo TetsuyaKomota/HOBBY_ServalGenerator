@@ -190,7 +190,7 @@ def train():
                 generated_images = generator.predict(n_learn, verbose=0)
                 resultList = discriminator.predict(generated_images)
                 resultList = [(i, r[0]) for i, r in enumerate(resultList)]
-                resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
+                resultList = sorted(resultList, key=(lambda t:t[1]))[-10:]
                 for r in resultList:
                     n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
                 with open(SAVE_NOIZE_PATH + "forLearn_3", "wb") as f:
