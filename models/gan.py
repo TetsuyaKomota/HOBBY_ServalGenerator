@@ -213,8 +213,8 @@ def train():
             # discriminator の結果を出力してみる
             Zg = [int(i[0]>0.5) for i in discriminator.predict(generated_images)]
             Zd = [int(i[0]>0.5) for i in discriminator.predict(image_batch)]
-            print("g_res:" + str(Zg[:20]))
-            print("d_res:" + str(Zd[:20]))
+            print("g_res:" + str(sum(Zg)) + "/" + str(BATCH_SIZE))
+            print("d_res:" + str(sum(Zd)) + "/" + str(BATCH_SIZE))
 
             # 生成画像を出力
             if index % 700 == 0:
