@@ -185,6 +185,16 @@ def train():
         if epoch % SPAN_UPDATE_NOIZE == 0:
             nextIdx = int(epoch/SPAN_UPDATE_NOIZE) % 3
             n_learn = n_learnList[nextIdx]
+            # forLearn_3は，うまく学習できないノイズを捨てるようにしよう
+            if nextIdx == 2:
+                generated_images = generator.predict(n_learn, verbose=0)
+                resultList = discriminator.predict(generated_images)
+                resultList = [(i, r[0]) for i, r in enumerate(resultList)]
+                resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
+                for r in resultList:
+                    n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
+                with open(SAVE_NOIZE_PATH + "forLearn_3", "wb") as f:
+                    dill.dump(n_learn, f)
 
         for index in range(num_batches):
             image_batch      = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
