@@ -21,6 +21,8 @@ from setting import BATCH_SIZE
 from setting import NUM_EPOCH
 from setting import SPAN_UPDATE_NOIZE
 
+from setting import INPUT_PATTERN
+
 from setting import G_LR
 from setting import G_BETA
 from setting import D_LR
@@ -151,40 +153,11 @@ def train():
     num_batches = int(Xg.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
     
-    # 出力画像用のノイズを生成
-    # 画像の成長過程を見たいので，出力画像には常に同じノイズを使う
-    # n_sample = loadorGenerateNoizeSet("forSample.dill")
-    
-    # 学習用のノイズを生成
-    # 3セットの学習ノイズを順番に学習させてみたい
-    # n_learnList = []
-    # n_learnList.append(loadorGenerateNoizeSet("forLearn_1.dill"))
-    # n_learnList.append(loadorGenerateNoizeSet("forLearn_2.dill"))
-    # n_learnList.append(loadorGenerateNoizeSet("forLearn_3.dill"))
-
     # ノイズ処理用のマネージャインスタンスを生成
-    manager = InputManager(1)
+    manager = InputManager(INPUT_PATTERN)
     generated_images = None
 
     for epoch in range(NUM_EPOCH):
-        # 学習に使用するノイズを取得
-        # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
-        # 試しに 100 エポックごとにノイズを変えてみる
-        """
-        if epoch % SPAN_UPDATE_NOIZE == 0:
-            nextIdx = int(epoch/SPAN_UPDATE_NOIZE) % 3
-            n_learn = n_learnList[nextIdx]
-            # forLearn_3は，うまく学習できないノイズを捨てるようにしよう
-            if nextIdx == 2:
-                generated_images = generator.predict(n_learn, verbose=0)
-                resultList = discriminator.predict(generated_images)
-                resultList = [(i, r[0]) for i, r in enumerate(resultList)]
-                resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
-                for r in resultList:
-                    n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
-                with open(SAVE_NOIZE_PATH + "forLearn_3", "wb") as f:
-                    dill.dump(n_learn, f)
-        """
         # 次に学習に使用するノイズセットを取得する
         if epoch == 0:
             dList = None

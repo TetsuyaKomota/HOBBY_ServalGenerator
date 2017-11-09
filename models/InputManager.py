@@ -22,7 +22,9 @@ class InputManager:
         for npath in glob.glob(SAVE_NOIZE_PATH + "*"):
             with open(npath, "rb") as f:
                 self.noizeList.append(dill.load(f))
-        if methodIdx == 1:
+        if   methodIdx == 2:
+            self.next = self.next2
+        elif methodIdx == 1:
             self.next = self.next1
         else:
             self.next = self.next0
@@ -59,14 +61,32 @@ class InputManager:
             return self.noizeList[1]
         l = len(self.noizeList)
         nextIdx = int(epoch/100)%(l-1)+1
-        if nextIdx == l-1: 
+        if nextIdx == 0: 
             resultList = [(i, r[0]) for i, r in enumerate(dList)]
             resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
             for r in resultList:
-                n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
+                newrand = np.random.uniform(-1, 1, NOIZE_SIZE)
+                self.noizeList[l-1][r[0]] = newrand
             dillName = "forLearn_" + str(l-1) + ".dill"
             with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
-                dill.dump(n_learn, f)
+                dill.dump(self.noizeList(l-1), f)
+        return self.noizeList[nextIdx]
+
+    # 2 : 1 エポックごとに 0, 1, 2, 3 をサイクルし，
+    #     すべてのセットで評価の低いノイズを更新する
+    def next2(self, epoch, dList):
+        if dList is None:
+            return self.noizeList[1]
+        l = len(self.noizeList)
+        nextIdx = int(epoch/100)%l
+        resultList = [(i, r[0]) for i, r in enumerate(dList)]
+        resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
+        for r in resultList:
+            newrand = np.random.uniform(-1, 1, NOIZE_SIZE)
+            self.noizeList[(nextIdx-1)%l][r[0]] = newrand
+        dillName = "forLearn_" + str((nextIdx-1)%l) + ".dill"
+        with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
+            dill.dump(self.noizeList[(nextIdx-1)%l], f)
         return self.noizeList[nextIdx]
 
 
