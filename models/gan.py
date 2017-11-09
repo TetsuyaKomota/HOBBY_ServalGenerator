@@ -214,7 +214,10 @@ def train():
 
             # 生成画像を出力
             if index % 700 == 0:
-                combine_images(manager.noizeList, epoch, index)
+                l = []
+                for n in manager.noizeList:
+                    l.append(generator.predict(n, verbose=0))
+                combine_images(l, epoch, index)
 
         generator.save_weights(g_weights_path)
         discriminator.save_weights(d_weights_path)
