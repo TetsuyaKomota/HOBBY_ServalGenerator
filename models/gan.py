@@ -96,8 +96,8 @@ def combine_images(learn, epoch, batch, path="output/"):
         for k in range(3):
             output[w*i:w*(i+1), h*j:h*(j+1), k] = learn[0][n][:, :, k]
             output[w*i:w*(i+1), h*(rows+j):h*(rows+j+1), k] = learn[1][n][:, :, k]
-            output[w*(cols+i):w*(cols+i+1), h*j:h*(j+1), k] = learn[2][n][:, :, k]
-            output[w*(cols+i):w*(cols+i+1), h*(rows+j):h*(rows+j+1), k] = learn[3][n][:, :, k]
+            output[w*(cols+i):w*(cols+i+1), h*(rows+j):h*(rows+j+1), k] = learn[2][n][:, :, k]
+            output[w*(cols+i):w*(cols+i+1), h*j:h*(j+1), k] = learn[3][n][:, :, k]
 
     output = output*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
@@ -157,10 +157,6 @@ def train():
     manager = InputManager(NEXT_PATTERN)
     generated_images = None
 
-    # discriminator の学習フラグ
-    # predict の結果，generator の画像に半分以上騙されたら学習開始
-    dIsLearnable = False
-
     for epoch in range(NUM_EPOCH):
         # 次に学習に使用するノイズセットを取得する
         if epoch == 0:
@@ -174,12 +170,9 @@ def train():
             generated_images = generator.predict(n_learn, verbose=0)
 
             # discriminatorを更新
-            if dIsLearnable == True:
-                Xd = np.concatenate((image_batch, generated_images))
-                yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                d_loss = discriminator.train_on_batch(Xd, yd)
-            else:
-                d_loss = 0.0
+            Xd = np.concatenate((image_batch, generated_images))
+            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+            d_loss = discriminator.train_on_batch(Xd, yd)
 
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
@@ -191,8 +184,6 @@ def train():
             Zd = [int(i[0]>0.5) for i in discriminator.predict(image_batch)]
             print("g_res:" + str(sum(Zg)) + "/" + str(BATCH_SIZE))
             print("d_res:" + str(sum(Zd)) + "/" + str(BATCH_SIZE))
-
-            dIsLearnable = (sum(Zg)/BATCH_SIZE >= 0.5)
 
             # 生成画像を出力
             if index % 700 == 0:
