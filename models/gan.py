@@ -154,8 +154,12 @@ def train():
     print('Number of batches:', num_batches)
     
     # ノイズ処理用のマネージャインスタンスを生成
-    manager = InputManager(INPUT_PATTERN)
+    manager = InputManager(NEXT_PATTERN)
     generated_images = None
+
+    # discriminator の学習フラグ
+    # predict の結果，generator の画像に半分以上騙されたら学習開始
+    dIsLearnable = False
 
     for epoch in range(NUM_EPOCH):
         # 次に学習に使用するノイズセットを取得する
@@ -170,9 +174,12 @@ def train():
             generated_images = generator.predict(n_learn, verbose=0)
 
             # discriminatorを更新
-            Xd = np.concatenate((image_batch, generated_images))
-            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = discriminator.train_on_batch(Xd, yd)
+            if dIsLearnable == True:
+                Xd = np.concatenate((image_batch, generated_images))
+                yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+                d_loss = discriminator.train_on_batch(Xd, yd)
+            else:
+                d_loss = 0.0
 
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
@@ -184,6 +191,8 @@ def train():
             Zd = [int(i[0]>0.5) for i in discriminator.predict(image_batch)]
             print("g_res:" + str(sum(Zg)) + "/" + str(BATCH_SIZE))
             print("d_res:" + str(sum(Zd)) + "/" + str(BATCH_SIZE))
+
+            dIsLearnable = (sum(Zg)/BATCH_SIZE >= 0.5)
 
             # 生成画像を出力
             if index % 700 == 0:
