@@ -31,7 +31,7 @@ if __name__ == "__main__":
         
         #1枚1枚のグラフを描き、appendしていく
         tmp = Image.open(picList[i])
-        ims.append(plt.imshow(tmp))     
+        ims.append([plt.imshow(tmp)])     
     
         # 進行を表示
         if i%(int(size/10)) == 0:
@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
     #アニメーション作成    
     if os.path.exists("tmp/imagemanager") == False:
-        os.mkdir(folderName) 
+        os.mkdir("tmp/imagemanager") 
     print("[MakeAnimation]save gif")
     ani = animation.ArtistAnimation(fig, ims, interval=100, repeat_delay=1000)
-    ani.save("tmp/imagemanager/MakeAnimation_result.gif")
+    ani.save("tmp/imagemanager/MakeAnimation_result.gif", writer="imagemagick")
