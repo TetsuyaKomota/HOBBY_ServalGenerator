@@ -80,22 +80,22 @@ def discriminator_model():
 # 画像を出力する
 # 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
 # 学習画像と出力画像は同じサイズ，枚数を前提
-def combine_images(sample, learn, epoch, batch, path="output/"):
-    total  = sample.shape[0]
+def combine_images(learn, epoch, batch, path="output/"):
+    total  = learn[0].shape[0]
     cols   = int(math.sqrt(total))
     rows   = math.ceil(float(total)/cols)
-    w, h   = sample.shape[1:3]
+    w, h   = learn[0].shape[1:3]
     size   = (h*rows*2, w*cols*2, 3)
-    output = np.zeros(size, dtype=sample.dtype)
+    output = np.zeros(size, dtype=learn[0].dtype)
 
-    for n in range(len(sample)):
+    for n in range(len(learn[0])):
         i = int(n/cols)
         j = n % cols
         for k in range(3):
-            output[w*i:w*(i+1), h*j:h*(j+1), k] = sample[n][:, :, k]
-            output[w*i:w*(i+1), h*(rows+j):h*(rows+j+1), k] = learn[0][n][:, :, k]
-            output[w*(cols+i):w*(cols+i+1), h*j:h*(j+1), k] = learn[1][n][:, :, k]
-            output[w*(cols+i):w*(cols+i+1), h*(rows+j):h*(rows+j+1), k] = learn[2][n][:, :, k]
+            output[w*i:w*(i+1), h*j:h*(j+1), k] = learn[0][n][:, :, k]
+            output[w*i:w*(i+1), h*(rows+j):h*(rows+j+1), k] = learn[1][n][:, :, k]
+            output[w*(cols+i):w*(cols+i+1), h*j:h*(j+1), k] = learn[2][n][:, :, k]
+            output[w*(cols+i):w*(cols+i+1), h*(rows+j):h*(rows+j+1), k] = learn[3][n][:, :, k]
 
     output = output*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
@@ -214,12 +214,7 @@ def train():
 
             # 生成画像を出力
             if index % 700 == 0:
-                s = generator.predict(n_sample, verbose=0)
-                l = []
-                l.append(generator.predict(n_learnList[0], verbose=0))
-                l.append(generator.predict(n_learnList[1], verbose=0))
-                l.append(generator.predict(n_learnList[2], verbose=0))
-                combine_images(s, l, epoch, index)
+                combine_images(manager.noizeList, epoch, index)
 
         generator.save_weights(g_weights_path)
         discriminator.save_weights(d_weights_path)
