@@ -65,7 +65,8 @@ class InputManager:
             resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
             for r in resultList:
                 n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
-            with open(SAVE_NOIZE_PATH + "forLearn_" + str(l), "wb") as f:
+            dillName = "forLearn_" + str(l) + ".dill"
+            with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
                 dill.dump(n_learn, f)
         return self.noizeList[nextIdx]
 
