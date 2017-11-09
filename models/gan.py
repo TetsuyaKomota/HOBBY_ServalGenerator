@@ -21,7 +21,7 @@ from setting import BATCH_SIZE
 from setting import NUM_EPOCH
 from setting import SPAN_UPDATE_NOIZE
 
-from setting import INPUT_PATTERN
+from setting import NEXT_PATTERN
 
 from setting import G_LR
 from setting import G_BETA
@@ -163,7 +163,7 @@ def train():
             dList = None
         else:
             dList = discriminator.predict(generated_images)
-        n_learn = manager.next(epoch, generated_images)
+        n_learn = manager.next(epoch, dList)
 
         for index in range(num_batches):
             image_batch      = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
