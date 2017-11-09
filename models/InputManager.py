@@ -23,9 +23,9 @@ class InputManager:
             with open(npath, "rb") as f:
                 self.noizeList.append(dill.load(f))
         if methodIdx == 1:
-            self.next = next0
+            self.next = self.next1
         else:
-            self.next = next0
+            self.next = self.next0
             
     # 長さ dim の 乱数配列を num 個持つ2次元配列を返す
     # 主に generator に渡す入力を作るのに使用する
@@ -55,7 +55,7 @@ class InputManager:
     # 1 : 100 エポックごとに 1, 2, 3 をサイクルし，
     #     3 の時は評価の低いノイズを更新する
     def next1(self, epoch, dList):
-        if dLIst is None:
+        if dList is None:
             return self.noizeList[1]
         l = len(self.noizeList)
         nextIdx = int(epoch/100)%(l-1)+1
