@@ -78,7 +78,7 @@ class InputManager:
         if dList is None:
             return self.noizeList[1]
         l = len(self.noizeList)
-        nextIdx = int(epoch/100)%l
+        nextIdx = epoch%l
         resultList = [(i, r[0]) for i, r in enumerate(dList)]
         resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
         for r in resultList:
