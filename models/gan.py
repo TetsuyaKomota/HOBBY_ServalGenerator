@@ -26,6 +26,8 @@ from setting import G_BETA
 from setting import D_LR
 from setting import D_BETA
 
+from models.InputManager import InputManager
+
 SAVE_MODEL_PATH = "tmp/save_models/"
 SAVE_NOIZE_PATH = "tmp/save_noizes/"
 GENERATED_IMAGE_PATH = "tmp/"
@@ -105,25 +107,6 @@ def combine_images(sample, learn, epoch, batch, path="output/"):
 
     return output
 
-# 長さ dim の 乱数配列を num 個持つ2次元配列を返す
-# 主に generator に渡す入力を作るのに使用する
-def makeNoize(dim, num):
-    return np.array([np.random.uniform(-1, 1, dim) for _ in range(num)])
-
-# ノイズのセットをロード，ない場合は生成してセーブする
-def loadorGenerateNoizeSet(dillName):
-    n_sample_path = SAVE_NOIZE_PATH + dillName
-
-    if os.path.exists(n_sample_path):
-        with open(n_sample_path, "rb") as f:
-            n_sample = dill.load(f)
-    else:
-        n_sample = makeNoize(NOIZE_SIZE, BATCH_SIZE)
-        with open(n_sample_path, "wb") as f:
-            dill.dump(n_sample, f)
-
-    return n_sample
-
 def train():
     (Xg, _), (_, _) = FriendsLoader.load_data()
     Xg = (Xg.astype(np.float32) - 127.5)/127.5
@@ -165,23 +148,29 @@ def train():
         f.write(generator.to_json())
     dcgan.summary()
 
-    # 出力画像用のノイズを生成
-    # 画像の成長過程を見たいので，出力画像には常に同じノイズを使う
-    n_sample = loadorGenerateNoizeSet("forSample.dill")
     num_batches = int(Xg.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
     
+    # 出力画像用のノイズを生成
+    # 画像の成長過程を見たいので，出力画像には常に同じノイズを使う
+    # n_sample = loadorGenerateNoizeSet("forSample.dill")
+    
     # 学習用のノイズを生成
     # 3セットの学習ノイズを順番に学習させてみたい
-    n_learnList = []
-    n_learnList.append(loadorGenerateNoizeSet("forLearn_1.dill"))
-    n_learnList.append(loadorGenerateNoizeSet("forLearn_2.dill"))
-    n_learnList.append(loadorGenerateNoizeSet("forLearn_3.dill"))
+    # n_learnList = []
+    # n_learnList.append(loadorGenerateNoizeSet("forLearn_1.dill"))
+    # n_learnList.append(loadorGenerateNoizeSet("forLearn_2.dill"))
+    # n_learnList.append(loadorGenerateNoizeSet("forLearn_3.dill"))
+
+    # ノイズ処理用のマネージャインスタンスを生成
+    manager = InputManager(1)
+    generated_images = None
 
     for epoch in range(NUM_EPOCH):
         # 学習に使用するノイズを取得
         # 同じノイズを使い続ける方が学習速度は速いが汎化性能が低い
         # 試しに 100 エポックごとにノイズを変えてみる
+        """
         if epoch % SPAN_UPDATE_NOIZE == 0:
             nextIdx = int(epoch/SPAN_UPDATE_NOIZE) % 3
             n_learn = n_learnList[nextIdx]
@@ -195,6 +184,13 @@ def train():
                     n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
                 with open(SAVE_NOIZE_PATH + "forLearn_3", "wb") as f:
                     dill.dump(n_learn, f)
+        """
+        # 次に学習に使用するノイズセットを取得する
+        if epoch == 0:
+            dList = None
+        else:
+            dList = discriminator.predict(generated_images)
+        n_learn = manager.next(epoch, generated_images)
 
         for index in range(num_batches):
             image_batch      = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
