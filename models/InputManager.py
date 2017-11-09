@@ -27,7 +27,6 @@ class InputManager:
         else:
             self.next = next0
             
-
     # 長さ dim の 乱数配列を num 個持つ2次元配列を返す
     # 主に generator に渡す入力を作るのに使用する
     def makeNoize(self, dim, num):
@@ -65,7 +64,7 @@ class InputManager:
             resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
             for r in resultList:
                 n_learn[r[0]] = np.random.uniform(-1, 1, NOIZE_SIZE)
-            dillName = "forLearn_" + str(l) + ".dill"
+            dillName = "forLearn_" + str(l-1) + ".dill"
             with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
                 dill.dump(n_learn, f)
         return self.noizeList[nextIdx]
