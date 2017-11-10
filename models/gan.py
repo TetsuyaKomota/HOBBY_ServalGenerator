@@ -18,6 +18,7 @@ import dill
 from setting import IMG_SIZE
 from setting import NOIZE_SIZE
 from setting import BATCH_SIZE
+from setting import START_EPOCH
 from setting import NUM_EPOCH
 from setting import SPAN_UPDATE_NOIZE
 
@@ -161,7 +162,7 @@ def train():
     # predict の結果，generator の画像に半分以上騙されたら学習開始
     dIsLearnable = False
 
-    for epoch in range(NUM_EPOCH):
+    for epoch in range(START_EPOCH, NUM_EPOCH):
         # 次に学習に使用するノイズセットを取得する
         if epoch == 0:
             dList = None
