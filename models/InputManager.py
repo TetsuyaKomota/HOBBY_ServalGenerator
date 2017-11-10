@@ -80,7 +80,7 @@ class InputManager:
         l = len(self.noizeList)
         nextIdx = epoch%l
         resultList = [(i, r[0]) for i, r in enumerate(dList)]
-        resultList = sorted(resultList, key=(lambda t:t[1]))[:10]
+        resultList = sorted(resultList, key=(lambda t:t[1]))[:45]
         for r in resultList:
             newrand = np.random.uniform(-1, 1, NOIZE_SIZE)
             self.noizeList[(nextIdx-1)%l][r[0]] = newrand
