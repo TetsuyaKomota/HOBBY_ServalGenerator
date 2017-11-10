@@ -10,6 +10,7 @@
 import dill
 import glob
 import numpy as np
+import os
 
 from setting import NOIZE_SIZE
 from setting import BATCH_SIZE
@@ -19,9 +20,9 @@ SAVE_NOIZE_PATH = "tmp/save_noizes/"
 class InputManager:
     def __init__(self, methodIdx):
         self.noizeList = []
-        for npath in glob.glob(SAVE_NOIZE_PATH + "*"):
-            with open(npath, "rb") as f:
-                self.noizeList.append(dill.load(f))
+        for i in range(4):
+            dillName = "forLearn_" + str(i) + ".dill"
+            self.noizeList.append(self.loadorGenerateNoizeSet(dillName))
         if   methodIdx == 2:
             self.next = self.next2
         elif methodIdx == 1:

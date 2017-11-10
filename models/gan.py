@@ -129,7 +129,12 @@ def train():
     g_json_path    = SAVE_MODEL_PATH + "generator.json"
     g_weights_path = SAVE_MODEL_PATH + "generator.h5"
     g_opt          = Adam(lr=G_LR, beta_1=G_BETA)
-   
+  
+    if os.path.exists(SAVE_MODEL_PATH) == False:
+        os.mkdir(SAVE_MODEL_PATH)
+    if os.path.exists(SAVE_NOIZE_PATH) == False:
+        os.mkdir(SAVE_NOIZE_PATH)
+ 
     # Discriminator のロード 
     if os.path.exists(d_json_path):
         with open(d_json_path, "r", encoding="utf-8") as f:
