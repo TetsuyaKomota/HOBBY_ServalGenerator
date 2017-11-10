@@ -94,11 +94,19 @@ def combine_images(learn, epoch, batch, path="output/"):
     for n in range(len(learn[0])):
         i = int(n/cols)
         j = n % cols
+        w0 = w* i
+        w1 = w*(i+1)
+        w2 = w*(cols+i)
+        w3 = w*(cols+i+1)
+        h0 = h* i
+        h1 = h*(i+1)
+        h2 = h*(cols+i)
+        h3 = h*(cols+i+1)
         for k in range(3):
-            output[w*i:w*(i+1), h*j:h*(j+1), k] = learn[0][n][:, :, k]
-            output[w*i:w*(i+1), h*(rows+j):h*(rows+j+1), k] = learn[1][n][:, :, k]
-            output[w*(cols+i):w*(cols+i+1), h*(rows+j):h*(rows+j+1), k] = learn[2][n][:, :, k]
-            output[w*(cols+i):w*(cols+i+1), h*j:h*(j+1), k] = learn[3][n][:, :, k]
+            output[w0:w1, h0:h1, k] = learn[0][n][:, :, k]
+            output[w0:w1, h2:h3, k] = learn[1][n][:, :, k]
+            output[w2:w3, h2:h3, k] = learn[2][n][:, :, k]
+            output[w2:w3, h0:h1, k] = learn[3][n][:, :, k]
 
     output = output*127.5 + 127.5
     if not os.path.exists(GENERATED_IMAGE_PATH):
@@ -156,22 +164,18 @@ def train():
     
     # ノイズ処理用のマネージャインスタンスを生成
     manager = InputManager(NEXT_PATTERN)
-    generated_images = None
+    gList = None
 
     for epoch in range(START_EPOCH, NUM_EPOCH):
         # 次に学習に使用するノイズセットを取得する
-        if epoch == START_EPOCH:
-            dList = None
-        else:
-            dList = discriminator.predict(generated_images)
-        n_learn = manager.next(epoch, dList)
+        n_learn = manager.next(epoch, gList)
 
         for index in range(num_batches):
-            image_batch      = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
-            generated_images = generator.predict(n_learn, verbose=0)
+            g_images = generator.predict(n_learn, verbose=0)
+            d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
-            Xd = np.concatenate((image_batch, generated_images))
+            Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
 
@@ -181,8 +185,10 @@ def train():
             print(text % (epoch, index, g_loss, d_loss))
 
             # discriminator の結果を出力してみる
-            Zg = [int(i[0]>0.5) for i in discriminator.predict(generated_images)]
-            Zd = [int(i[0]>0.5) for i in discriminator.predict(image_batch)]
+            gList = discriminator.predict(g_images)
+            dList = discriminator.predict(d_images)
+            Zg = [int(i[0]>0.5) for i in gList]
+            Zd = [int(i[0]>0.5) for i in dList]
             print("g_res:" + str(sum(Zg)) + "/" + str(BATCH_SIZE))
             print("d_res:" + str(sum(Zd)) + "/" + str(BATCH_SIZE))
 
