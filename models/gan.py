@@ -98,10 +98,10 @@ def combine_images(learn, epoch, batch, path="output/"):
         w1 = w*(i+1)
         w2 = w*(cols+i)
         w3 = w*(cols+i+1)
-        h0 = h* i
-        h1 = h*(i+1)
-        h2 = h*(cols+i)
-        h3 = h*(cols+i+1)
+        h0 = h* j
+        h1 = h*(j+1)
+        h2 = h*(rows+j)
+        h3 = h*(rows+j+1)
         for k in range(3):
             output[w0:w1, h0:h1, k] = learn[0][n][:, :, k]
             output[w0:w1, h2:h3, k] = learn[1][n][:, :, k]
