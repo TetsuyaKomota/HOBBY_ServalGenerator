@@ -160,7 +160,7 @@ def train():
 
     for epoch in range(START_EPOCH, NUM_EPOCH):
         # 次に学習に使用するノイズセットを取得する
-        if epoch == 0:
+        if epoch == START_EPOCH:
             dList = None
         else:
             dList = discriminator.predict(generated_images)
