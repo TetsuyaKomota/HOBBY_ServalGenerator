@@ -23,7 +23,9 @@ class InputManager:
         for i in range(4):
             dillName = "forLearn_" + str(i) + ".dill"
             self.noizeList.append(self.loadorGenerateNoizeSet(dillName))
-        if   methodIdx == 2:
+        if   methodIdx == 3:
+            self.next = self.next3
+        elif methodIdx == 2:
             self.next = self.next2
         elif methodIdx == 1:
             self.next = self.next1
@@ -89,6 +91,11 @@ class InputManager:
         with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
             dill.dump(self.noizeList[(nextIdx-1)%l], f)
         return self.noizeList[nextIdx]
+
+    # 3 : 0 しか使わない
+    def next3(self, epoch, dList):
+        return self.noizeList[0]
+
 
 
     # =====================================================

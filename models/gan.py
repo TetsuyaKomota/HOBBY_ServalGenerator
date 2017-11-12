@@ -190,8 +190,8 @@ def train():
             print(text % (epoch, index, g_loss, d_loss))
 
             # discriminator の結果を出力してみる
-            """
             gList = discriminator.predict(g_images)
+            """
             dList = discriminator.predict(d_images)
             Zg = [int(i[0]>0.5) for i in gList]
             Zd = [int(i[0]>0.5) for i in dList]
