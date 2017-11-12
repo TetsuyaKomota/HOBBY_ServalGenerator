@@ -190,12 +190,14 @@ def train():
             print(text % (epoch, index, g_loss, d_loss))
 
             # discriminator の結果を出力してみる
+            """
             gList = discriminator.predict(g_images)
             dList = discriminator.predict(d_images)
             Zg = [int(i[0]>0.5) for i in gList]
             Zd = [int(i[0]>0.5) for i in dList]
             print("g_res:" + str(sum(Zg)) + "/" + str(BATCH_SIZE))
             print("d_res:" + str(sum(Zd)) + "/" + str(BATCH_SIZE))
+            """
 
             # 生成画像を出力
             if index % 700 == 0:
