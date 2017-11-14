@@ -76,6 +76,9 @@ def discriminator_model():
     model.add(Dense(NOIZE_SIZE))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
+    model.add(Dense(int(NOIZE_SIZE/2)))
+    model.add(LeakyReLU(0.2))
+    model.add(Dropout(0.5))
     model.add(Dense(1))
     model.add(Activation("sigmoid"))
     return model
