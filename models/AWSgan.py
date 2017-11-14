@@ -22,6 +22,8 @@ from setting import START_EPOCH
 from setting import NUM_EPOCH
 from setting import SPAN_UPDATE_NOIZE
 
+from setting import USE_DATA_RATE
+
 from setting import NEXT_PATTERN
 
 from setting import G_LR
@@ -39,7 +41,10 @@ GENERATED_IMAGE_PATH = "tmp/"
 def generator_model():
     layerSize = int(IMG_SIZE/16)
     model = Sequential()
-    model.add(Dense(layerSize*layerSize*1024, input_shape=(NOIZE_SIZE,)))
+    model.add(Dense(1024, input_shape=(NOIZE_SIZE,)))
+    model.add(BatchNormalization())
+    model.add(Activation("relu"))
+    model.add(Dense(layerSize*layerSize*1024))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
     model.add(Reshape((layerSize, layerSize, 1024)))
@@ -73,10 +78,10 @@ def discriminator_model():
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     model.add(Dropout(0.5))
-    model.add(Dense(NOIZE_SIZE))
+    model.add(Dense(1024))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
-    model.add(Dense(int(NOIZE_SIZE/2)))
+    model.add(Dense(int(NOIZE_SIZE)))
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
     model.add(Dense(1))
@@ -122,7 +127,8 @@ def combine_images(learn, epoch, batch, path="output/"):
     return output
 
 def train():
-    (Xg, _), (_, _) = FriendsLoader.load_data()
+    dataRate = max(0, 1-USE_DATA_RATE)
+    (Xg, _), (_, _) = FriendsLoader.load_data(test_rate=dataRate)
     Xg = (Xg.astype(np.float32) - 127.5)/127.5
     Xg = Xg.reshape(Xg.shape[0], Xg.shape[1], Xg.shape[2], 3)
 
@@ -197,8 +203,8 @@ def train():
             logfile.write((text+"\n") % (epoch, index, g_loss, d_loss))
 
             # discriminator の結果を出力してみる
-            gList = discriminator.predict(g_images)
             """
+            gList = discriminator.predict(g_images)
             dList = discriminator.predict(d_images)
             Zg = [int(i[0]>0.5) for i in gList]
             Zd = [int(i[0]>0.5) for i in dList]

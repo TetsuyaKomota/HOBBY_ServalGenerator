@@ -78,18 +78,17 @@ class InputManager:
     # 2 : 1 エポックごとに 0, 1, 2, 3 をサイクルし，
     #     すべてのセットで評価の低いノイズを更新する
     def next2(self, epoch, dList):
-        if dList is None:
-            return self.noizeList[1]
         l = len(self.noizeList)
         nextIdx = epoch%l
-        resultList = [(i, r[0]) for i, r in enumerate(dList)]
-        resultList = sorted(resultList, key=(lambda t:t[1]))[:45]
-        for r in resultList:
-            newrand = np.random.uniform(-1, 1, NOIZE_SIZE)
-            self.noizeList[(nextIdx-1)%l][r[0]] = newrand
-        dillName = "forLearn_" + str((nextIdx-1)%l) + ".dill"
-        with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
-            dill.dump(self.noizeList[(nextIdx-1)%l], f)
+        if dList is not None:
+            resultList = [(i, r[0]) for i, r in enumerate(dList)]
+            resultList = sorted(resultList, key=(lambda t:t[1]))[:45]
+            for r in resultList:
+                newrand = np.random.uniform(-1, 1, NOIZE_SIZE)
+                self.noizeList[(nextIdx-1)%l][r[0]] = newrand
+            dillName = "forLearn_" + str((nextIdx-1)%l) + ".dill"
+            with open(SAVE_NOIZE_PATH+dillName,"wb") as f:
+                dill.dump(self.noizeList[(nextIdx-1)%l], f)
         return self.noizeList[nextIdx]
 
     # 3 : 0 しか使わない
