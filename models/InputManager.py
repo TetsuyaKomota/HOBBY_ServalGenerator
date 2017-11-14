@@ -80,7 +80,11 @@ class InputManager:
     def next2(self, epoch, dList):
         l = len(self.noizeList)
         nextIdx = epoch%l
-        if dList is not None:
+        if dList is None:
+            dim = len(self.noizeList[0][0])
+            num = len(self.noizeList[0])
+            self.noizeList[nextIdx] = self.makeNoize(dim, dum)
+        else:
             resultList = [(i, r[0]) for i, r in enumerate(dList)]
             resultList = sorted(resultList, key=(lambda t:t[1]))[:45]
             for r in resultList:
