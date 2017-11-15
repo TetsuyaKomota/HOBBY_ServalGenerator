@@ -83,7 +83,7 @@ class InputManager:
         if dList is None:
             dim = len(self.noizeList[0][0])
             num = len(self.noizeList[0])
-            self.noizeList[nextIdx] = self.makeNoize(dim, dum)
+            self.noizeList[nextIdx] = self.makeNoize(dim, num)
         else:
             resultList = [(i, r[0]) for i, r in enumerate(dList)]
             resultList = sorted(resultList, key=(lambda t:t[1]))[:45]
