@@ -23,7 +23,9 @@ class InputManager:
         for i in range(4):
             dillName = "forLearn_" + str(i) + ".dill"
             self.noizeList.append(self.loadorGenerateNoizeSet(dillName))
-        if   methodIdx == 3:
+        if   methodIdx == 4:
+            self.next = self.next4
+        elif methodIdx == 3:
             self.next = self.next3
         elif methodIdx == 2:
             self.next = self.next2
@@ -98,6 +100,14 @@ class InputManager:
     # 3 : 0 しか使わない
     def next3(self, epoch, dList):
         return self.noizeList[0]
+
+    # 4 : 0 のみを常に更新して使う 
+    def next4(self, epoch, dList):
+        dim = len(self.noizeList[0][0])
+        num = len(self.noizeList[0])
+        self.noizeList[0] = self.makeNoize(dim, num)
+        return self.noizeList[0]
+
 
 
 
