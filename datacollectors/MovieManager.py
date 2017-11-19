@@ -32,7 +32,7 @@ def main(movieName):
             #グレースケール変換
             image_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             #物体認識（顔認識）の実行
-            facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.2, minNeighbors=2, minSize=(64, 64))
+            facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=2, minSize=(80, 80))
         except:
             print("invalid input")
             break

@@ -12,5 +12,5 @@ for impath in impaths:
     img = cv2.imread(impath)
     sizeList.append(img.shape[0])
 
-plt.hist(sizeList, bins = 50)
+plt.hist(sizeList, bins = 200, normed=True, cumulative=True)
 plt.show()
