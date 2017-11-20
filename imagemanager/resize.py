@@ -5,7 +5,7 @@ import glob
 import os
 
 fpaths = glob.glob("tmp/output/*")
-resizeTo = 2000
+resizeTo = 80
 
 xmax = 0
 ymax = 0

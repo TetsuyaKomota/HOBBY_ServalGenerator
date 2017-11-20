@@ -3,7 +3,7 @@
 import cv2 
 
 
-cascade_path = "../rizeaya/tmp/cascades/lbpcascade_animeface.xml"
+cascade_path = "tmp/cascades/lbpcascade_animeface.xml"
 
 def main(movieName):
 
@@ -32,7 +32,7 @@ def main(movieName):
             #グレースケール変換
             image_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             #物体認識（顔認識）の実行
-            facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=2, minSize=(80, 80))
+            facerect = cascade.detectMultiScale(image_gray, scaleFactor=1.1, minNeighbors=3, minSize=(160, 160))
         except:
             print("invalid input")
             break
@@ -56,5 +56,5 @@ def main(movieName):
 
 
 if __name__ == "__main__":
-    for i in range(10, 14):
+    for i in range(14):
         main("{0:02d}".format(i))
