@@ -68,17 +68,22 @@ def discriminator_model():
                     input_shape=(IMG_SIZE, IMG_SIZE, 3))) # ここ注意
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(256, (5, 5), strides=(2, 2)))
+    model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (5, 5), strides=(2, 2)))
+    model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(1024, (5, 5), strides=(2, 2)))
+    model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(int(NOIZE_SIZE)))
+    model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
     model.add(Dense(1))
+    model.add(BatchNormalization())
     model.add(Activation("sigmoid"))
     return model
 
