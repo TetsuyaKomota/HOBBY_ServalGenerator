@@ -3,7 +3,7 @@ from keras.models import model_from_json
 from keras.layers import Dense, Activation, Reshape
 from keras.layers.normalization import BatchNormalization
 from keras.layers.convolutional import UpSampling2D
-from keras.layers import Conv2D, MaxPooling2D
+from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers import Flatten, Dropout
 import math
@@ -76,12 +76,17 @@ def discriminator_model():
     model.add(Conv2D(1024, (5, 5), strides=(2, 2)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
+    """
     model.add(Flatten())
     model.add(Dropout(0.5))
     model.add(Dense(int(NOIZE_SIZE)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Dropout(0.5))
+    """
+    model.add(GlobalAveragePooling2D())
+    model.add(BatchNormalization())
+    model.add(LeakyReLU(0.2))
     model.add(Dense(1))
     model.add(BatchNormalization())
     model.add(Activation("sigmoid"))
