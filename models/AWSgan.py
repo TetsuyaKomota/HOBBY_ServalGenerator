@@ -129,11 +129,6 @@ def combine_images(learn, epoch, batch, path="output/"):
 
     return output
 
-# デバッグ用．指定したモデルの
-# 重みを取得する
-def all_weights(m):
-    return [list(w.reshape((-1))) for w in m.get_weights()][0]
-
 def train():
     dataRate = max(0, 1-USE_DATA_RATE)
     (Xg, _), (_, _) = FriendsLoader.load_data(test_rate=dataRate)
@@ -201,52 +196,19 @@ def train():
             g_images = generator.predict(n_learn, verbose=0)
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
-            # =====
-            # =
-            # g_w = all_weights(generator)[:3]
-            # d_w = all_weights(discriminator)[:3]
-            # print("I : g" + str(g_w) + "  d" + str(d_w))
-            # =
-            # =====
-
+            # generatorを更新
+            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
+            
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
 
-            # =====
-            # =
-            # g_w = all_weights(generator)[:3]
-            # d_w = all_weights(discriminator)[:3]
-            # print("D : g" + str(g_w) + "  d" + str(d_w))
-            # =
-            # =====
-
-            # generatorを更新
-            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-
-            # =====
-            # =
-            # g_w = all_weights(generator)[:3]
-            # d_w = all_weights(discriminator)[:3]
-            # print("G : g" + str(g_w) + "  d" + str(d_w))
-            # =
-            # =====
-
-            text   = "epoch: %d, batch: %d, "
-            text  += "g_loss: [%f, %f], d_loss: [%f, %f]"
-            print(text % (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1]))
-            logfile.write((text+"\n") % (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1]))
-
-            # discriminator の結果を出力してみる
-            """
-            gList = discriminator.predict(g_images)
-            dList = discriminator.predict(d_images)
-            Zg = [int(i[0]>0.5) for i in gList]
-            Zd = [int(i[0]>0.5) for i in dList]
-            print("g_res:" + str(sum(Zg)) + "/" + str(BATCH_SIZE))
-            print("d_res:" + str(sum(Zd)) + "/" + str(BATCH_SIZE))
-            """
+            t  = "epoch: %d, batch: %d, "
+            t += "g_loss: [%f, %f], d_loss: [%f, %f]"
+            tp = (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1])
+            print(t % tp)
+            logfile.write((t+"\n") % tp)
 
             # 生成画像を出力
             if index % 700 == 0:
