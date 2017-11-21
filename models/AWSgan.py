@@ -87,8 +87,8 @@ def discriminator_model():
     model.add(GlobalAveragePooling2D())
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Dense(1))
-    model.add(Activation("sigmoid"))
+    model.add(Dense(2))
+    model.add(Activation("softmax"))
     return model
 
 # 画像を出力する
@@ -196,14 +196,14 @@ def train():
             g_images = generator.predict(n_learn, verbose=0)
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
-            # generatorを更新
-            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images))
-            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+            yd = [[1, 0]]*BATCH_SIZE + [[0, 1]]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
 
+            # generatorを更新
+            g_loss = dcgan.train_on_batch(n_learn, [[1,0]]*BATCH_SIZE)
+            
             t  = "epoch: %d, batch: %d, "
             t += "g_loss: [%f, %f], d_loss: [%f, %f]"
             tp = (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1])
