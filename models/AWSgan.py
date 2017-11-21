@@ -146,7 +146,8 @@ def train():
         discriminator = discriminator_model()
     if os.path.exists(d_weights_path):
         discriminator.load_weights(d_weights_path, by_name=False)
-    discriminator.compile(loss="binary_crossentropy", optimizer=d_opt)
+    discriminator.compile(loss="binary_crossentropy", \
+            optimizer=d_opt, metrics=["accuracy"])
     with open(d_json_path, "w", encoding="utf-8") as f:
         f.write(discriminator.to_json())
     discriminator.summary()
@@ -162,7 +163,8 @@ def train():
     # generator+discriminator （discriminator部分の重みは固定）
     dcgan = Sequential([generator, discriminator])
     discriminator.trainable = False
-    dcgan.compile(loss="binary_crossentropy", optimizer=g_opt)
+    dcgan.compile(loss="binary_crossentropy", \
+            optimizer=g_opt, metrics=["accuracy"])
     with open(g_json_path, "w", encoding="utf-8") as f:
         f.write(generator.to_json())
     dcgan.summary()
@@ -192,9 +194,11 @@ def train():
 
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            text   = "epoch: %d, batch: %d, g_loss: %f, d_loss: %f"
-            print(text % (epoch, index, g_loss, d_loss))
-            logfile.write((text+"\n") % (epoch, index, g_loss, d_loss))
+
+            text   = "epoch: %d, batch: %d, "
+            text  += "g_loss: [%f, %f], d_loss: [%f, %f]"
+            print(text % (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1]))
+            logfile.write((text+"\n") % (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1]))
 
             # discriminator の結果を出力してみる
             """
