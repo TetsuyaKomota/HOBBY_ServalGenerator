@@ -7,6 +7,7 @@ from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers import Flatten, Dropout
 from keras.initializers import RandomNormal as rand
+from keras.initializers import TruncatedNormal as trunc
 import math
 import numpy as np
 import os
@@ -43,42 +44,41 @@ GENERATED_IMAGE_PATH = "tmp/"
 def generator_model():
     layerSize = int(IMG_SIZE/16)
     model = Sequential()
-    model.add(Dense(layerSize*layerSize*512, input_shape=(NOIZE_SIZE, )))
+    model.add(Dense(layerSize*layerSize*512, kernel_initializer=rand(stddev=0.02), input_shape=(NOIZE_SIZE, )))
     model.add(Reshape((layerSize, layerSize, 512)))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(256, (5, 5), strides=(2, 2), padding="same"))
+    model.add(Conv2DTranspose(256, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=0.02), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(128, (5, 5), strides=(2, 2), padding="same"))
+    model.add(Conv2DTranspose(128, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=0.02), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose( 64, (5, 5), strides=(2, 2), padding="same"))
+    model.add(Conv2DTranspose( 64, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=0.02), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(  3, (5, 5), strides=(2, 2), padding="same"))
+    model.add(Conv2DTranspose(  3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=0.02), padding="same"))
     model.add(Activation("tanh"))
     return model
 
 def discriminator_model():
     model = Sequential()
-    model.add(Conv2D(64, (5, 5), strides=(2, 2),
-                    input_shape=(IMG_SIZE, IMG_SIZE, 3))) # ここ注意
+    model.add(Conv2D( 64, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(128, (5, 5), strides=(2, 2)))
+    model.add(Conv2D(128, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(256, (5, 5), strides=(2, 2)))
+    model.add(Conv2D(256, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(512, (5, 5), strides=(2, 2)))
+    model.add(Conv2D(512, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
     # model.add(BatchNormalization())
     # model.add(LeakyReLU(0.2))
-    model.add(Dense(1))
+    model.add(Dense(1, kernel_initilizer=rand(stddev=0.02)))
     model.add(Activation("sigmoid"))
     return model
 
