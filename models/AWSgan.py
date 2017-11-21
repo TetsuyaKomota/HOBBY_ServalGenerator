@@ -130,6 +130,11 @@ def combine_images(learn, epoch, batch, path="output/"):
 
     return output
 
+# デバッグ用．指定したモデルの
+# 重みを取得する
+def all_weights(m):
+    return [list(w.reshape((-1))) for w in m.get_weights()]
+
 def train():
     dataRate = max(0, 1-USE_DATA_RATE)
     (Xg, _), (_, _) = FriendsLoader.load_data(test_rate=dataRate)
@@ -197,13 +202,37 @@ def train():
             g_images = generator.predict(n_learn, verbose=0)
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
+            # =====
+            # =
+            g_w = all_weights(generator)[:3]
+            d_w = all_weights(discriminator)[:3]
+            print("I : g" + str(g_w) + "  d" + str(d_w))
+            # =
+            # =====
+
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
 
+            # =====
+            # =
+            g_w = all_weights(generator)[:3]
+            d_w = all_weights(discriminator)[:3]
+            print("D : g" + str(g_w) + "  d" + str(d_w))
+            # =
+            # =====
+
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
+
+            # =====
+            # =
+            g_w = all_weights(generator)[:3]
+            d_w = all_weights(discriminator)[:3]
+            print("G : g" + str(g_w) + "  d" + str(d_w))
+            # =
+            # =====
 
             text   = "epoch: %d, batch: %d, "
             text  += "g_loss: [%f, %f], d_loss: [%f, %f]"
