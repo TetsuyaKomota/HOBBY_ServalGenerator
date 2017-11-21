@@ -68,13 +68,13 @@ def discriminator_model():
                     input_shape=(IMG_SIZE, IMG_SIZE, 3))) # ここ注意
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(256, (5, 5), strides=(2, 2)))
-    model.add(BatchNormalization())
+    # model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (5, 5), strides=(2, 2)))
-    model.add(BatchNormalization())
+    # model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(1024, (5, 5), strides=(2, 2)))
-    model.add(BatchNormalization())
+    # model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     """
     model.add(Flatten())
@@ -202,11 +202,23 @@ def train():
             d_loss = discriminator.train_on_batch(Xd, yd)
 
             # generatorを更新
-            g_loss = dcgan.train_on_batch(n_learn, [[1,0]]*BATCH_SIZE)
+            g_loss = dcgan.train_on_batch(n_learn, [[1, 0]]*BATCH_SIZE)
+           
+            # 学習が済んだ段階で G から画像を再生成
+            g_images = generator.predict(n_learn, verbose=0)
             
+            # 評価
+            Xd = np.concatenate((d_images, g_images))
+            yd = [[1, 0]]*BATCH_SIZE + [[0, 1]]*BATCH_SIZE
+            acc = discriminator.test_on_batch(Xd, yd)
+
             t  = "epoch: %d, batch: %d, "
-            t += "g_loss: [%f, %f], d_loss: [%f, %f]"
-            tp = (epoch, index, g_loss[0], g_loss[1], d_loss[0], d_loss[1])
+            t += "g_loss: [%f, %f], d_loss: [%f, %f], acc: [%f, %f]"
+            tp = [epoch, index]
+            tp = tp + g_loss
+            tp = tp + d_loss
+            tp = tp + acc
+            tp = tuple(tp)
             print(t % tp)
             logfile.write((t+"\n") % tp)
 
