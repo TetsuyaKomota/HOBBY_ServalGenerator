@@ -2,7 +2,7 @@ from keras.models import Sequential
 from keras.models import model_from_json
 from keras.layers import Dense, Activation, Reshape
 from keras.layers.normalization import BatchNormalization
-from keras.layers.convolutional import UpSampling2D, conv2DTranspose
+from keras.layers.convolutional import UpSampling2D, Conv2DTranspose
 from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers import Flatten, Dropout
@@ -47,31 +47,15 @@ def generator_model():
     model.add(Reshape((layerSize, layerSize, 512)))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    """
-    model.add(UpSampling2D((2, 2)))
-    model.add(Conv2D(256, (5, 5), padding="same"))
-    """
     model.add(Conv2DTranspose(256, (5, 5), strides=(2, 2), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    """
-    model.add(UpSampling2D((2, 2)))
-    model.add(Conv2D(128, (5, 5), padding="same"))
-    """
     model.add(Conv2DTranspose(128, (5, 5), strides=(2, 2), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    """
-    model.add(UpSampling2D((2, 2)))
-    model.add(Conv2D( 64, (5, 5), padding="same"))
-    """
     model.add(Conv2DTranspose( 64, (5, 5), strides=(2, 2), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    """
-    model.add(UpSampling2D((2, 2)))
-    model.add(Conv2D(  3, (5, 5), padding="same"))
-    """
     model.add(Conv2DTranspose(  3, (5, 5), strides=(2, 2), padding="same"))
     model.add(Activation("tanh"))
     return model
@@ -92,19 +76,10 @@ def discriminator_model():
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
-    # model.add(Dense(int(NOIZE_SIZE)))
     # model.add(BatchNormalization())
     # model.add(LeakyReLU(0.2))
-    # model.add(Dropout(0.5))
     model.add(Dense(1))
     model.add(Activation("sigmoid"))
-    """
-    model.add(GlobalAveragePooling2D())
-    model.add(BatchNormalization())
-    model.add(LeakyReLU(0.2))
-    model.add(Dense(2))
-    model.add(Activation("softmax"))
-    """
     return model
 
 # 画像を出力する
