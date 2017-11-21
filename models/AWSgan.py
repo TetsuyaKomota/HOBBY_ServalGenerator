@@ -200,18 +200,18 @@ def train():
 
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images))
-            yd = [[1, 0]]*BATCH_SIZE + [[0, 1]]*BATCH_SIZE
+            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
 
             # generatorを更新
-            g_loss = dcgan.train_on_batch(n_learn, [[1, 0]]*BATCH_SIZE)
+            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
            
             # 学習が済んだ段階で G から画像を再生成
             g_images = generator.predict(n_learn, verbose=0)
             
             # 評価
             Xd = np.concatenate((d_images, g_images))
-            yd = [[1, 0]]*BATCH_SIZE + [[0, 1]]*BATCH_SIZE
+            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             acc = discriminator.test_on_batch(Xd, yd)
 
             t  = "epoch: %d, batch: %d, "
