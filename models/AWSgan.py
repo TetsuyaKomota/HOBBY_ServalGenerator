@@ -64,16 +64,16 @@ def generator_model():
 
 def discriminator_model():
     model = Sequential()
-    model.add(Conv2D(128, (5, 5), strides=(2, 2),
+    model.add(Conv2D(64, (5, 5), strides=(2, 2),
                     input_shape=(IMG_SIZE, IMG_SIZE, 3))) # ここ注意
+    model.add(LeakyReLU(0.2))
+    model.add(Conv2D(128, (5, 5), strides=(2, 2)))
+    model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(256, (5, 5), strides=(2, 2)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (5, 5), strides=(2, 2)))
-    model.add(BatchNormalization())
-    model.add(LeakyReLU(0.2))
-    model.add(Conv2D(1024, (5, 5), strides=(2, 2)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     """
@@ -88,7 +88,6 @@ def discriminator_model():
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Dense(1))
-    model.add(BatchNormalization())
     model.add(Activation("sigmoid"))
     return model
 
