@@ -133,7 +133,7 @@ def combine_images(learn, epoch, batch, path="output/"):
 # デバッグ用．指定したモデルの
 # 重みを取得する
 def all_weights(m):
-    return [list(w.reshape((-1))) for w in m.get_weights()]
+    return [list(w.reshape((-1))) for w in m.get_weights()][0]
 
 def train():
     dataRate = max(0, 1-USE_DATA_RATE)
@@ -204,9 +204,9 @@ def train():
 
             # =====
             # =
-            g_w = all_weights(generator)[:3]
-            d_w = all_weights(discriminator)[:3]
-            print("I : g" + str(g_w) + "  d" + str(d_w))
+            # g_w = all_weights(generator)[:3]
+            # d_w = all_weights(discriminator)[:3]
+            # print("I : g" + str(g_w) + "  d" + str(d_w))
             # =
             # =====
 
@@ -217,9 +217,9 @@ def train():
 
             # =====
             # =
-            g_w = all_weights(generator)[:3]
-            d_w = all_weights(discriminator)[:3]
-            print("D : g" + str(g_w) + "  d" + str(d_w))
+            # g_w = all_weights(generator)[:3]
+            # d_w = all_weights(discriminator)[:3]
+            # print("D : g" + str(g_w) + "  d" + str(d_w))
             # =
             # =====
 
@@ -228,9 +228,9 @@ def train():
 
             # =====
             # =
-            g_w = all_weights(generator)[:3]
-            d_w = all_weights(discriminator)[:3]
-            print("G : g" + str(g_w) + "  d" + str(d_w))
+            # g_w = all_weights(generator)[:3]
+            # d_w = all_weights(discriminator)[:3]
+            # print("G : g" + str(g_w) + "  d" + str(d_w))
             # =
             # =====
 
