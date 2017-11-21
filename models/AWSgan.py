@@ -195,6 +195,9 @@ def train():
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
            
+            # generatorを再度更新
+            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
+            
             # 学習が済んだ段階で G から画像を再生成
             g_images = generator.predict(n_learn, verbose=0)
             
