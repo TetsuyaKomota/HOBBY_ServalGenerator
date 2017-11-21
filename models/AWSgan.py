@@ -63,22 +63,22 @@ def generator_model():
 
 def discriminator_model():
     model = Sequential()
-    model.add(Conv2D( 64, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
+    model.add(Conv2D( 64, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=0.02), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(128, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02)))
+    model.add(Conv2D(128, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=0.02)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(256, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02)))
+    model.add(Conv2D(256, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=0.02)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(512, (5, 5), strides=(2, 2), kernel_initilizer=trunc(stddev=0.02)))
+    model.add(Conv2D(512, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=0.02)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
     # model.add(BatchNormalization())
     # model.add(LeakyReLU(0.2))
-    model.add(Dense(1, kernel_initilizer=rand(stddev=0.02)))
+    model.add(Dense(1, kernel_initializer=rand(stddev=0.02)))
     model.add(Activation("sigmoid"))
     return model
 
