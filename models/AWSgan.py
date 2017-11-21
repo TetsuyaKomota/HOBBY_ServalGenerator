@@ -6,6 +6,7 @@ from keras.layers.convolutional import UpSampling2D, conv2DTranspose
 from keras.layers import Conv2D, MaxPooling2D, GlobalAveragePooling2D
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers import Flatten, Dropout
+from keras.initializers import RandomNormal as rand
 import math
 import numpy as np
 import os
@@ -36,6 +37,7 @@ from models.InputManager import InputManager
 SAVE_MODEL_PATH = "tmp/save_models/"
 SAVE_NOIZE_PATH = "tmp/save_noizes/"
 GENERATED_IMAGE_PATH = "tmp/"
+
 
 
 def generator_model():
