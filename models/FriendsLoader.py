@@ -3,11 +3,13 @@
 import glob
 import cv2
 import numpy as np
+import random
 
 def load_data(test_rate=0):
     X = {}
     X["nokemonohainai"] = []
     dataPaths = glob.glob("tmp/friends/*")
+    random.shuffle(dataPaths)
     for dpath in dataPaths:
         X["nokemonohainai"].append(cv2.imread(dpath))
 
@@ -16,7 +18,7 @@ def load_data(test_rate=0):
     y_train = []
     y_test  = []
 
-    for i, label in enumerate(X):
+    for i, label in enumerate(X.keys()):
         testSize = int(len(X[label])*test_rate)
         X_train = X_train + X[label][testSize:]
         X_test  = X_test  + X[label][:testSize]
