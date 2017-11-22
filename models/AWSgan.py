@@ -182,8 +182,6 @@ def train():
     logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
 
     for epoch in range(START_EPOCH, NUM_EPOCH):
-        # エポックごとにデータセットをシャッフルする
-        random.shuffle(Xg)
 
         for index in range(num_batches):
             # 次に学習に使用するノイズセットを取得する
