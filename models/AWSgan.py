@@ -198,15 +198,15 @@ def train():
                 Xd = np.concatenate((d_images, g_images))
                 yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
                 # d_loss = discriminator.train_on_batch(Xd, yd)
-                d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epoch=1)
+                d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epochs=1)
 
             # generatorを更新
             # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            g_loss = dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epoch=1)
+            g_loss = dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=1)
            
             # generatorを再度更新
             # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            g_loss = dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epoch=1)
+            g_loss = dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=1)
             
             # 学習が済んだ段階で G から画像を再生成
             g_images = generator.predict(n_learn, verbose=0)
