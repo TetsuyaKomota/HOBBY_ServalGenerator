@@ -36,6 +36,8 @@ from setting import D_BETA
 
 from setting import STDDEV
 
+from setting import D_LEARNING_STEP
+
 from models.InputManager import InputManager
 
 SAVE_MODEL_PATH = "tmp/save_models/"
@@ -191,7 +193,7 @@ def train():
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
-            if index%5 == 0:
+            if index%D_LEANING_STEP == 0:
                 Xd = np.concatenate((d_images, g_images))
                 yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
                 d_loss = discriminator.train_on_batch(Xd, yd)
