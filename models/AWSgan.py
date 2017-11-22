@@ -191,9 +191,10 @@ def train():
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
-            Xd = np.concatenate((d_images, g_images))
-            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = discriminator.train_on_batch(Xd, yd)
+            if index%5 == 0:
+                Xd = np.concatenate((d_images, g_images))
+                yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+                d_loss = discriminator.train_on_batch(Xd, yd)
 
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
