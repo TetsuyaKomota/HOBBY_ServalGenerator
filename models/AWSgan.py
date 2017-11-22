@@ -21,6 +21,7 @@ import dill
 from setting import IMG_SIZE
 from setting import NOIZE_SIZE
 from setting import BATCH_SIZE
+from setting import KERNEL_CORE_SIZE
 from setting import START_EPOCH
 from setting import NUM_EPOCH
 from setting import SPAN_UPDATE_NOIZE
@@ -47,34 +48,34 @@ GENERATED_IMAGE_PATH = "tmp/"
 def generator_model():
     layerSize = int(IMG_SIZE/16)
     model = Sequential()
-    model.add(Dense(layerSize*layerSize*512, kernel_initializer=rand(stddev=STDDEV), input_shape=(NOIZE_SIZE, )))
-    model.add(Reshape((layerSize, layerSize, 512)))
+    model.add(Dense(layerSize*layerSize*KERNEL_CORE_SIZE*8, kernel_initializer=rand(stddev=STDDEV), input_shape=(NOIZE_SIZE, )))
+    model.add(Reshape((layerSize, layerSize, KERNEL_CORE_SIZE*8)))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(256, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
+    model.add(Conv2DTranspose(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(128, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
+    model.add(Conv2DTranspose(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose( 64, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
+    model.add(Conv2DTranspose(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(  3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
+    model.add(Conv2DTranspose(                 3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(Activation("tanh"))
     return model
 
 def discriminator_model():
     model = Sequential()
-    model.add(Conv2D( 64, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
+    model.add(Conv2D(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(128, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
+    model.add(Conv2D(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(256, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
+    model.add(Conv2D(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(512, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
+    model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
