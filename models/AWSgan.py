@@ -70,13 +70,13 @@ def discriminator_model():
     model.add(Conv2D(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+#    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+#    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+#    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
@@ -150,7 +150,7 @@ def train():
         discriminator = discriminator_model()
     if os.path.exists(d_weights_path):
         discriminator.load_weights(d_weights_path, by_name=False)
-    discriminator.compile(loss="binary_crossentropy", optimizer=d_opt)
+    discriminator.compile(loss="binary_crossentropy", optimizer=d_opt, metrics=["accuracy"])
     with open(d_json_path, "w", encoding="utf-8") as f:
         f.write(discriminator.to_json())
     discriminator.summary()
@@ -166,7 +166,7 @@ def train():
     # generator+discriminator （discriminator部分の重みは固定）
     dcgan = Sequential([generator, discriminator])
     discriminator.trainable = False
-    dcgan.compile(loss="binary_crossentropy", optimizer=g_opt)
+    dcgan.compile(loss="binary_crossentropy", optimizer=g_opt, metrics=["accuracy"])
     with open(g_json_path, "w", encoding="utf-8") as f:
         f.write(generator.to_json())
     dcgan.summary()
@@ -194,18 +194,13 @@ def train():
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            # d_loss = discriminator.train_on_batch(Xd, yd)
-            discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epochs=1, verbose=0)
-            d_loss = discriminator.test_on_batch(Xd, yd)
+            d_loss = discriminator.train_on_batch(Xd, yd)
 
             # generatorを更新
-            # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=3, verbose=0)
+            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
 
             # generatorを再度更新
-            # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=3, verbose=0)
-            g_loss = dcgan.test_on_batch(n_learn, [1]*BATCH_SIZE)
+            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
             
             # 学習が済んだ段階で G から画像を再生成
             g_images = generator.predict(n_learn, verbose=0)
@@ -219,9 +214,7 @@ def train():
             t += "g_loss: [%f, %f], d_loss: [%f, %f], acc: [%f, %f]"
             tp = [epoch, index]
             tp = tp + g_loss
-            tp = tp + [999]
             tp = tp + d_loss
-            tp = tp + [999]
             tp = tp + acc
             tp = tuple(tp)
             print(t % tp)
@@ -238,7 +231,7 @@ def train():
             print(t % tp)
 
             # 生成画像を出力
-            if index % 700 == 0:
+            if index % 50 == 0:
                 l = []
                 for n in manager.noizeList:
                     l.append(generator.predict(n, verbose=0))
