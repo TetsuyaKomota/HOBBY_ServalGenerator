@@ -45,41 +45,41 @@ GENERATED_IMAGE_PATH = "tmp/"
 def generator_model():
     layerSize = int(IMG_SIZE/16)
     model = Sequential()
-    model.add(Dense(layerSize*layerSize*512, kernel_initializer=rand(stddev=STDDEV), bias_initializer="zeros", input_shape=(NOIZE_SIZE, )))
+    model.add(Dense(layerSize*layerSize*512, kernel_initializer=rand(stddev=STDDEV), input_shape=(NOIZE_SIZE, )))
     model.add(Reshape((layerSize, layerSize, 512)))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(256, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), bias_initializer="zeros", padding="same"))
+    model.add(Conv2DTranspose(256, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(128, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), bias_initializer="zeros", padding="same"))
+    model.add(Conv2DTranspose(128, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose( 64, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), bias_initializer="zeros", padding="same"))
+    model.add(Conv2DTranspose( 64, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(BatchNormalization())
     model.add(Activation("relu"))
-    model.add(Conv2DTranspose(  3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), bias_initializer="zeros", padding="same"))
+    model.add(Conv2DTranspose(  3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(Activation("tanh"))
     return model
 
 def discriminator_model():
     model = Sequential()
-    model.add(Conv2D( 64, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), bias_initializer="zeros", input_shape=(IMG_SIZE, IMG_SIZE, 3)))
+    model.add(Conv2D( 64, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(128, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), bias_initializer="zeros"))
+    model.add(Conv2D(128, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(256, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), bias_initializer="zeros"))
+    model.add(Conv2D(256, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(512, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), bias_initializer="zeros"))
+    model.add(Conv2D(512, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(BatchNormalization())
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
     # model.add(BatchNormalization())
     # model.add(LeakyReLU(0.2))
-    model.add(Dense(1, kernel_initializer=rand(stddev=STDDEV), bias_initializer="zeros"))
+    model.add(Dense(1, kernel_initializer=rand(stddev=STDDEV)))
     model.add(Activation("sigmoid"))
     return model
 
@@ -183,10 +183,10 @@ def train():
     for epoch in range(START_EPOCH, NUM_EPOCH):
         # エポックごとにデータセットをシャッフルする
         random.shuffle(Xg)
-        # 次に学習に使用するノイズセットを取得する
-        n_learn = manager.next(epoch, gList)
 
         for index in range(num_batches):
+            # 次に学習に使用するノイズセットを取得する
+            n_learn = manager.next(epoch, gList)
             g_images = generator.predict(n_learn, verbose=0)
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
