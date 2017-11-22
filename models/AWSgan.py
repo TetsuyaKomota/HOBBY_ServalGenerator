@@ -82,6 +82,7 @@ def discriminator_model():
     # model.add(Dropout(0.5))
     # model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
     # model.add(LeakyReLU(0.2))
+    model.add(Dropout(0.5))
     model.add(Dense(1, kernel_initializer=rand(stddev=STDDEV)))
     model.add(Activation("sigmoid"))
     return model
@@ -203,12 +204,11 @@ def train():
 
             # generatorを更新
             # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=1, verbose=0)
-            g_loss = dcgan.test_on_batch(n_learn, [1]*BATCH_SIZE)
+            dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=3, verbose=0)
 
             # generatorを再度更新
             # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=1, verbose=0)
+            dcgan.fit(n_learn, [1]*BATCH_SIZE, batch_size=BATCH_SIZE, epochs=3, verbose=0)
             g_loss = dcgan.test_on_batch(n_learn, [1]*BATCH_SIZE)
             
             # 学習が済んだ段階で G から画像を再生成
