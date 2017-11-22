@@ -125,8 +125,7 @@ def combine_images(learn, epoch, batch, path="output/"):
     return output
 
 def train():
-    dataRate = max(0, 1-USE_DATA_RATE)
-    (Xg, _), (_, _) = FriendsLoader.load_data(test_rate=dataRate)
+    (Xg, _), (_, _) = FriendsLoader.load_data()
     Xg = (Xg.astype(np.float32) - 127.5)/127.5
     Xg = Xg.reshape(Xg.shape[0], Xg.shape[1], Xg.shape[2], 3)
 
@@ -150,8 +149,7 @@ def train():
         discriminator = discriminator_model()
     if os.path.exists(d_weights_path):
         discriminator.load_weights(d_weights_path, by_name=False)
-    discriminator.compile(loss="binary_crossentropy", \
-            optimizer=d_opt, metrics=["accuracy"])
+    discriminator.compile(loss="binary_crossentropy", optimizer=d_opt)
     with open(d_json_path, "w", encoding="utf-8") as f:
         f.write(discriminator.to_json())
     discriminator.summary()
@@ -167,8 +165,7 @@ def train():
     # generator+discriminator （discriminator部分の重みは固定）
     dcgan = Sequential([generator, discriminator])
     discriminator.trainable = False
-    dcgan.compile(loss="binary_crossentropy", \
-            optimizer=g_opt, metrics=["accuracy"])
+    dcgan.compile(loss="binary_crossentropy", optimizer=g_opt)
     with open(g_json_path, "w", encoding="utf-8") as f:
         f.write(generator.to_json())
     dcgan.summary()
@@ -194,12 +191,11 @@ def train():
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
-            if index%D_LEARNING_STEP == 0:
-                Xd = np.concatenate((d_images, g_images))
-                yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                # d_loss = discriminator.train_on_batch(Xd, yd)
-                discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epochs=1, verbose=0)
-                d_loss = discriminator.test_on_batch(Xd, yd)
+            Xd = np.concatenate((d_images, g_images))
+            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+            # d_loss = discriminator.train_on_batch(Xd, yd)
+            discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epochs=1, verbose=0)
+            d_loss = discriminator.test_on_batch(Xd, yd)
 
             # generatorを更新
             # g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
@@ -223,7 +219,9 @@ def train():
             t += "g_loss: [%f, %f], d_loss: [%f, %f], acc: [%f, %f]"
             tp = [epoch, index]
             tp = tp + g_loss
+            tp = tp + [999]
             tp = tp + d_loss
+            tp = tp + [999]
             tp = tp + acc
             tp = tuple(tp)
             print(t % tp)
