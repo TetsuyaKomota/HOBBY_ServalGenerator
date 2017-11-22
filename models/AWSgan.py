@@ -219,6 +219,16 @@ def train():
             print(t % tp)
             logfile.write((t+"\n") % tp)
 
+            # 評価が全然信用できないので，predict を精査
+            pred     = discriminator.predict(Xd, verbose=0)
+            pred_d_m = sum(pred[:BATCH_SIZE])/BATCH_SIZE
+            pred_g_m = sum(pred[BATCH_SIZE:])/BATCH_SIZE
+            pred_d_v = sum([(p-pred_d_m)**2 for p in pred[:BATCH_SIZE]])/BATCH_SIZE
+            pred_g_v = sum([(p-pred_g_m)**2 for p in pred[BATCH_SIZE:]])/BATCH_SIZE
+            t  = "predict(m, v)  d(%f, %f) g(%f, %f)"
+            tp = (pred_d_m, pred_d_v, pred_g_m, pred_g_v)
+            print(t % tp)
+
             # 生成画像を出力
             if index % 700 == 0:
                 l = []
