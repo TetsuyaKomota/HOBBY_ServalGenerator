@@ -10,6 +10,7 @@ from keras.initializers import RandomNormal as rand
 from keras.initializers import TruncatedNormal as trunc
 import math
 import numpy as np
+import random
 import os
 from keras.datasets import mnist
 from keras.optimizers import Adam
@@ -180,6 +181,8 @@ def train():
     logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
 
     for epoch in range(START_EPOCH, NUM_EPOCH):
+        # エポックごとにデータセットをシャッフルする
+        random.shuffle(Xg)
         # 次に学習に使用するノイズセットを取得する
         n_learn = manager.next(epoch, gList)
 
