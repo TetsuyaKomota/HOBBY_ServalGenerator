@@ -36,6 +36,9 @@ from setting import D_BETA
 
 from setting import STDDEV
 
+from setting import BN_M
+from setting import BN_E
+
 from setting import D_LEARNING_STEP
 
 from models.InputManager import InputManager
@@ -47,18 +50,20 @@ GENERATED_IMAGE_PATH = "tmp/"
 def generator_model():
     layerSize = int(IMG_SIZE/16)
     model = Sequential()
+    # model.add(Dense(layerSize*layerSize*KERNEL_CORE_SIZE*8, kernel_initializer=rand(stddev=STDDEV)))
     model.add(Dense(layerSize*layerSize*KERNEL_CORE_SIZE*8, kernel_initializer=rand(stddev=STDDEV), input_shape=(NOIZE_SIZE, )))
+    # model.add(Dropout(0.5))
     model.add(Reshape((layerSize, layerSize, KERNEL_CORE_SIZE*8)))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
     model.add(Conv2DTranspose(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
     model.add(Conv2DTranspose(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
     model.add(Conv2DTranspose(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
     model.add(Conv2DTranspose(                 3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
     model.add(Activation("tanh"))
@@ -69,19 +74,19 @@ def discriminator_model():
     model.add(Conv2D(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-#    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+#    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-#    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+#    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-#    model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+#    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
-    # model.add(BatchNormalization(momentum=0.9, epsilon=1e-5))
+    # model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     # model.add(LeakyReLU(0.2))
-    model.add(Dropout(0.5))
+    # model.add(Dropout(0.5))
     model.add(Dense(1, kernel_initializer=rand(stddev=STDDEV)))
     model.add(Activation("sigmoid"))
     return model
@@ -229,7 +234,7 @@ def train():
             print(t % tp)
 
             # 生成画像を出力
-            if index % 50 == 0:
+            if index % int(BATCH_SIZE/2) == 0:
                 l = []
                 for n in manager.noizeList:
                     l.append(generator.predict(n, verbose=0))
