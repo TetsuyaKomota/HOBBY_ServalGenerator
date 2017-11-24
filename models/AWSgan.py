@@ -118,7 +118,7 @@ def generator_model():
     model.add(deconvLayer(KERNEL_CORE_SIZE*1))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
-    model.add(deconvLayer(KERNEL_CORE_SIZE*1, init="glorot_normal"))
+    model.add(deconvLayer(3, init="glorot_normal"))
     model.add(Activation("tanh"))
     return model
 
@@ -137,7 +137,7 @@ def discriminator_model():
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
-    model.add(denseLayer(1, init="glorot_normal")
+    model.add(denseLayer(1, init="glorot_normal"))
     model.add(Activation("sigmoid"))
     return model
 
@@ -283,7 +283,7 @@ def train():
             tp += acc
             tp += [pred_g_m, pred_g_v, pred_d_m, pred_d_v]
             print(t % tuple(tp))
-            logfile.write((t+"\n") % tp)
+            logfile.write((t+"\n") % tuple(tp))
 
             # 生成画像を出力
             if index % int(num_batches/2) == 0:
