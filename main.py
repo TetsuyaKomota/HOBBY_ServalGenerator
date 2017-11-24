@@ -17,6 +17,9 @@ if __name__ == "__main__":
         os.remove("tmp/save_models/generator.json")
         os.remove("tmp/save_models/generator.h5")
     if IS_RESET_NOIZE == True:
-        os.remove("tmp/save_noizes/*.dill")
+        os.remove("tmp/save_noizes/forLearn_0.dill")
+        os.remove("tmp/save_noizes/forLearn_1.dill")
+        os.remove("tmp/save_noizes/forLearn_2.dill")
+        os.remove("tmp/save_noizes/forLearn_3.dill")
 
     gan.train()

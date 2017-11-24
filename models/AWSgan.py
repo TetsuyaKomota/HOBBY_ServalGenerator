@@ -234,7 +234,7 @@ def train():
             print(t % tp)
 
             # 生成画像を出力
-            if index % int(BATCH_SIZE/2) == 0:
+            if index % int(num_batches/2) == 0:
                 l = []
                 for n in manager.noizeList:
                     l.append(generator.predict(n, verbose=0))
