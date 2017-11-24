@@ -185,10 +185,10 @@ def train():
     datas = datas.reshape(datas.shape[0], datas.shape[1], datas.shape[2], 3)
 
     d_json_path    = SAVE_MODEL_PATH + "discriminator.json"
-    d_weights_path = SAVE_MODEL_PATH + "discriminator.h5"
+    d_weights_path = SAVE_MODEL_PATH + "d_w_"
     d_opt          = Adam(lr=D_LR, beta_1=D_BETA)
     g_json_path    = SAVE_MODEL_PATH + "generator.json"
-    g_weights_path = SAVE_MODEL_PATH + "generator.h5"
+    g_weights_path = SAVE_MODEL_PATH + "g_w_"
     g_opt          = Adam(lr=G_LR, beta_1=G_BETA)
   
     if os.path.exists(SAVE_MODEL_PATH) == False:
@@ -202,8 +202,9 @@ def train():
             discriminator = model_from_json(f.read())
     else:
         discriminator = discriminator_model()
-    if os.path.exists(d_weights_path):
-        discriminator.load_weights(d_weights_path, by_name=False)
+    d_weights_load_path = d_weights_path + str(START_EPOCH) + ".h5"
+    if os.path.exists(d_weights_load_path):
+        discriminator.load_weights(d_weights_load_path, by_name=False)
     discriminator.compile(loss="binary_crossentropy", \
                             optimizer=d_opt, metrics=["accuracy"])
     with open(d_json_path, "w", encoding="utf-8") as f:
@@ -216,8 +217,9 @@ def train():
             generator = model_from_json(f.read())
     else:
         generator = generator_model()
-    if os.path.exists(g_weights_path):
-        generator.load_weights(g_weights_path, by_name=False)
+    g_weights_load_path = g_weights_path + str(START_EPOCH) + ".h5"
+    if os.path.exists(g_weights_load_path):
+        generator.load_weights(g_weights_load_path, by_name=False)
     # generator+discriminator （discriminator部分の重みは固定）
     dcgan = Sequential([generator, discriminator])
     discriminator.trainable = False
@@ -292,8 +294,9 @@ def train():
                     l.append(generator.predict(n, verbose=0))
                 combine_images(l, epoch, index)
 
-        generator.save_weights(g_weights_path)
-        discriminator.save_weights(d_weights_path)
+        if epoch % 50 == 0:
+            generator.save_weights(g_weights_path + str(epoch) + ".h5")
+            discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
 
 if __name__ == "__main__":
     train()
