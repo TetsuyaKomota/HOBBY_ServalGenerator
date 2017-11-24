@@ -11,7 +11,6 @@ from keras.initializers import TruncatedNormal as trunc
 import math
 import numpy as np
 import os
-from keras.datasets import mnist
 from keras.optimizers import Adam
 import models.FriendsLoader as FriendsLoader
 import cv2
@@ -47,57 +46,98 @@ SAVE_MODEL_PATH = "tmp/save_models/"
 SAVE_NOIZE_PATH = "tmp/save_noizes/"
 GENERATED_IMAGE_PATH = "tmp/"
 
+def denseLayer(filters, init="he_normal", input_shape=None):
+    if input_shape is not None:
+       return Dense(
+                filters,                 \
+                kernel_initializer=init, \
+                input_shape=input_shape  \
+              )
+    else:
+       return Dense(
+                filters,                 \
+                kernel_initializer=init  \
+              )
+
+
+# deconv 層のファクトリーメソッド
+def deconvLayer(filters, init="he_normal", input_shape=None):
+    if input_shape is not None:
+        return Conv2DTranspose(          \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init, \
+                padding="same",          \
+                input_shape=input_shape  \
+               )
+    else:
+        return Conv2DTranspose(          \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init, \
+                padding="same"           \
+               )
+
+
+# conv 層のファクトリーメソッド
+def convLayer(filters, init="he_normal", input_shape=None):
+    if input_shape is not None:
+        return Conv2D(                   \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init, \
+                input_shape=input_shape  \
+               )
+    else:
+        return Conv2D(                   \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init  \
+               )
+
+
 def generator_model():
-    layerSize = int(IMG_SIZE/16)
     model = Sequential()
-    # model.add(Dense(layerSize*layerSize*KERNEL_CORE_SIZE*8, kernel_initializer=rand(stddev=STDDEV)))
-    # model.add(Dense(layerSize*layerSize*KERNEL_CORE_SIZE*8, kernel_initializer=rand(stddev=STDDEV), input_shape=(NOIZE_SIZE, )))
-    model.add(Dense(layerSize*layerSize*KERNEL_CORE_SIZE*8, kernel_initializer="he_normal", input_shape=(NOIZE_SIZE, )))
-    # model.add(Dropout(0.5))
+    layerSize   = int(IMG_SIZE/16)
+    firstSize   = layerSize*layerSize*KERNEL_CORE_SIZE*8
+    input_shape = (NOIZE_SIZE, )
+    model.add(denseLayer(firstSize, input_shape=input_shape)
     model.add(Reshape((layerSize, layerSize, KERNEL_CORE_SIZE*8)))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
-    # model.add(Conv2DTranspose(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(Conv2DTranspose(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer="he_normal", padding="same"))
+    model.add(deconvLayer(KERNEL_CORE_SIZE*4))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
-    # model.add(Conv2DTranspose(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(Conv2DTranspose(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer="he_normal", padding="same"))
+    model.add(deconvLayer(KERNEL_CORE_SIZE*2))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
-    # model.add(Conv2DTranspose(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(Conv2DTranspose(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer="he_normal", padding="same"))
+    model.add(deconvLayer(KERNEL_CORE_SIZE*1))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
-    # model.add(Conv2DTranspose(                 3, (5, 5), strides=(2, 2), kernel_initializer=rand(stddev=STDDEV), padding="same"))
-    model.add(Conv2DTranspose(3, (5, 5), strides=(2, 2), kernel_initializer="glorot_normal", padding="same"))
+    model.add(deconvLayer(KERNEL_CORE_SIZE*1, init="glorot_normal"))
     model.add(Activation("tanh"))
     return model
 
 def discriminator_model():
     model = Sequential()
-    # model.add(Conv2D(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV), input_shape=(IMG_SIZE, IMG_SIZE, 3)))
-    model.add(Conv2D(KERNEL_CORE_SIZE*1, (5, 5), strides=(2, 2), kernel_initializer="he_normal", input_shape=(IMG_SIZE, IMG_SIZE, 3)))
+    input_shape = (IMG_SIZE, IMG_SIZE, 3)
+    model.add(convLayer(KERNEL_CORE_SIZE*1, input_shape=input_shape))
     model.add(LeakyReLU(0.2))
-    # model.add(Conv2D(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-    model.add(Conv2D(KERNEL_CORE_SIZE*2, (5, 5), strides=(2, 2), kernel_initializer="he_normal"))
+    model.add(convLayer(KERNEL_CORE_SIZE*2, input_shape=input_shape))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
-    # model.add(Conv2D(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-    model.add(Conv2D(KERNEL_CORE_SIZE*4, (5, 5), strides=(2, 2), kernel_initializer="he_normal"))
+    model.add(convLayer(KERNEL_CORE_SIZE*4, input_shape=input_shape))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
-    # model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
-    model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer="he_normal"))
+    model.add(convLayer(KERNEL_CORE_SIZE*8, input_shape=input_shape))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
-    # model.add(Dropout(0.5))
-    # model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
-    # model.add(LeakyReLU(0.2))
-    # model.add(Dropout(0.5))
-    # model.add(Dense(1, kernel_initializer=rand(stddev=STDDEV)))
-    model.add(Dense(1, kernel_initializer="glorot_normal"))
+    model.add(denseLayer(1, init="glorot_normal")
     model.add(Activation("sigmoid"))
     return model
 
@@ -140,9 +180,9 @@ def combine_images(learn, epoch, batch, path="output/"):
     return output
 
 def train():
-    (Xg, _), (_, _) = FriendsLoader.load_data()
-    Xg = (Xg.astype(np.float32) - 127.5)/127.5
-    Xg = Xg.reshape(Xg.shape[0], Xg.shape[1], Xg.shape[2], 3)
+    (datas, _), (_, _) = FriendsLoader.load_data()
+    datas = (datas.astype(np.float32) - 127.5)/127.5
+    datas = datas.reshape(datas.shape[0], datas.shape[1], datas.shape[2], 3)
 
     d_json_path    = SAVE_MODEL_PATH + "discriminator.json"
     d_weights_path = SAVE_MODEL_PATH + "discriminator.h5"
@@ -164,7 +204,8 @@ def train():
         discriminator = discriminator_model()
     if os.path.exists(d_weights_path):
         discriminator.load_weights(d_weights_path, by_name=False)
-    discriminator.compile(loss="binary_crossentropy", optimizer=d_opt, metrics=["accuracy"])
+    discriminator.compile(loss="binary_crossentropy", \
+                            optimizer=d_opt, metrics=["accuracy"])
     with open(d_json_path, "w", encoding="utf-8") as f:
         f.write(discriminator.to_json())
     discriminator.summary()
@@ -180,12 +221,13 @@ def train():
     # generator+discriminator （discriminator部分の重みは固定）
     dcgan = Sequential([generator, discriminator])
     discriminator.trainable = False
-    dcgan.compile(loss="binary_crossentropy", optimizer=g_opt, metrics=["accuracy"])
+    dcgan.compile(loss="binary_crossentropy", \
+                            optimizer=g_opt, metrics=["accuracy"])
     with open(g_json_path, "w", encoding="utf-8") as f:
         f.write(generator.to_json())
     dcgan.summary()
 
-    num_batches = int(Xg.shape[0] / BATCH_SIZE)
+    num_batches = int(datas.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
     
     # ノイズ処理用のマネージャインスタンスを生成
@@ -197,62 +239,51 @@ def train():
 
     for epoch in range(START_EPOCH, NUM_EPOCH):
 
-        np.random.shuffle(Xg)
+        np.random.shuffle(datas)
         for index in range(num_batches):
             # 次に学習に使用するノイズセットを取得する
             n_learn = manager.next(epoch, gList)
             g_images = generator.predict(n_learn, verbose=0)
-            d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
+            d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
-            """
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = discriminator.train_on_batch(Xd, yd)
-            """
-            """
-            d_loss_real = discriminator.train_on_batch(d_images, [1]*BATCH_SIZE)
-            d_loss_fake = discriminator.train_on_batch(g_images, [0]*BATCH_SIZE)
-            d_loss = [(d_loss_real[i]+d_loss_fake[i])/2 for i in range(len(d_loss_real))]
-            """
-            Xd = np.concatenate((d_images, g_images))
-            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epochs=1, shuffle=False, verbose=0)
-            d_loss = [d_loss.history["loss"][-1], d_loss.history["acc"][-1]]
+            d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, \
+                                        epochs=1, shuffle=False, verbose=0)
+            d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
  
             # generatorを更新
-            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
+            # 論文通り，G の学習は 2 エポック行う
+            Xg = n_learn
+            yg = [1]*BATCH_SIZE
+            g_loss = dcgan.fit(Xg, yg, batch_size=BATCH_SIZE, \
+                                        epochs=2, shuffle=False, verbose=0)
+            g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
-            # generatorを再度更新
-            g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
-            
-            # 学習が済んだ段階で G から画像を再生成
-            g_images = generator.predict(n_learn, verbose=0)
-            
             # 評価
-            Xd = np.concatenate((d_images, g_images))
-            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            acc = discriminator.test_on_batch(Xd, yd)
+            acc = discriminator.evaluate(Xd, yd, \
+                                          batch_size=BATCH_SIZE, verbose=0)
 
-            t  = "epoch: %d, batch: %d, "
-            t += "g_loss: [%f, %f], d_loss: [%f, %f], acc: [%f, %f]"
-            tp = [epoch, index]
-            tp = tp + g_loss
-            tp = tp + d_loss
-            tp = tp + acc
-            tp = tuple(tp)
-            print(t % tp)
-            logfile.write((t+"\n") % tp)
-
-            # 評価が全然信用できないので，predict を精査
+            # D の出力の様子を確認
             pred     = discriminator.predict(Xd, verbose=0)
-            pred_d_m = sum(pred[:BATCH_SIZE])/BATCH_SIZE
-            pred_g_m = sum(pred[BATCH_SIZE:])/BATCH_SIZE
-            pred_d_v = sum([(p-pred_d_m)**2 for p in pred[:BATCH_SIZE]])/BATCH_SIZE
-            pred_g_v = sum([(p-pred_g_m)**2 for p in pred[BATCH_SIZE:]])/BATCH_SIZE
-            t  = "predict(m, v)  g(%f, %f) d(%f, %f)"
-            tp = (pred_g_m, pred_g_v, pred_d_m, pred_d_v)
-            print(t % tp)
+            pred_d   = pred[:BATCH_SIZE]
+            pred_g   = pred[BATCH_SIZE:]
+            pred_d_m = sum(pred_d)/BATCH_SIZE
+            pred_g_m = sum(pred_g)/BATCH_SIZE
+            pred_d_v = sum([(p-pred_d_m)**2 for p in pred_d])/BATCH_SIZE
+            pred_g_v = sum([(p-pred_g_m)**2 for p in pred_g])/BATCH_SIZE
+ 
+            t   = "epoch: %d, batch: %d, "
+            t  += "g_loss: [%f, %f], d_loss: [%f, %f], acc: [%f, %f], "
+            t  += "predict(m, v)  g(%f, %f) d(%f, %f), "
+            tp  = [epoch, index]
+            tp += g_loss
+            tp += d_loss
+            tp += acc
+            tp += [pred_g_m, pred_g_v, pred_d_m, pred_d_v]
+            print(t % tuple(tp))
+            logfile.write((t+"\n") % tp)
 
             # 生成画像を出力
             if index % int(num_batches/2) == 0:
