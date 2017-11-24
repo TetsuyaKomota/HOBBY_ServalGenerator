@@ -105,7 +105,7 @@ def generator_model():
     layerSize   = int(IMG_SIZE/16)
     firstSize   = layerSize*layerSize*KERNEL_CORE_SIZE*8
     input_shape = (NOIZE_SIZE, )
-    model.add(denseLayer(firstSize, input_shape=input_shape)
+    model.add(denseLayer(firstSize, input_shape=input_shape))
     model.add(Reshape((layerSize, layerSize, KERNEL_CORE_SIZE*8)))
     model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(Activation("relu"))
