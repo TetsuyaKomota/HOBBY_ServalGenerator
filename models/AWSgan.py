@@ -89,7 +89,7 @@ def discriminator_model():
     model.add(LeakyReLU(0.2))
     # model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer=trunc(stddev=STDDEV)))
     model.add(Conv2D(KERNEL_CORE_SIZE*8, (5, 5), strides=(2, 2), kernel_initializer="he_normal"))
-#    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     # model.add(Dropout(0.5))
@@ -205,10 +205,15 @@ def train():
             d_images = Xg[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
+            """
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
-
+            """
+            d_loss_real = discriminator.train_on_batch(d_images, [1]*BATCH_SIZE)
+            d_loss_fake = discriminator.train_on_batch(g_images, [0]*BATCH_SIZE)
+            d_loss = [(d_loss_real[i]+d_loss_fake[i]) for i in range(len(d_loss_real))]
+ 
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
 
