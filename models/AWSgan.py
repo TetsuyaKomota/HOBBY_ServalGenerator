@@ -97,7 +97,7 @@ def discriminator_model():
     # model.add(LeakyReLU(0.2))
     # model.add(Dropout(0.5))
     # model.add(Dense(1, kernel_initializer=rand(stddev=STDDEV)))
-    model.add(Dense(1, kernel_initializer="grolot_normal"))
+    model.add(Dense(1, kernel_initializer="glorot_normal"))
     model.add(Activation("sigmoid"))
     return model
 
