@@ -210,9 +210,14 @@ def train():
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.train_on_batch(Xd, yd)
             """
+            """
             d_loss_real = discriminator.train_on_batch(d_images, [1]*BATCH_SIZE)
             d_loss_fake = discriminator.train_on_batch(g_images, [0]*BATCH_SIZE)
             d_loss = [(d_loss_real[i]+d_loss_fake[i])/2 for i in range(len(d_loss_real))]
+            """
+            Xd = np.concatenate((d_images, g_images))
+            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+            d_loss = discriminator.fit(Xd, yd, batch_size=int(BATCH_SIZE/8), verbose=0)
  
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
