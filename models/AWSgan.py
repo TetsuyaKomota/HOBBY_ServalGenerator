@@ -212,7 +212,7 @@ def train():
             """
             d_loss_real = discriminator.train_on_batch(d_images, [1]*BATCH_SIZE)
             d_loss_fake = discriminator.train_on_batch(g_images, [0]*BATCH_SIZE)
-            d_loss = [(d_loss_real[i]+d_loss_fake[i]) for i in range(len(d_loss_real))]
+            d_loss = [(d_loss_real[i]+d_loss_fake[i])/2 for i in range(len(d_loss_real))]
  
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
