@@ -218,7 +218,7 @@ def train():
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, epochs=1, shuffle=False, verbose=0)
-            d_loss = d_loss.losses[-1]
+            d_loss = [d_loss.history["loss"][-1], d_loss.history["acc"][-1]]
  
             # generatorを更新
             g_loss = dcgan.train_on_batch(n_learn, [1]*BATCH_SIZE)
