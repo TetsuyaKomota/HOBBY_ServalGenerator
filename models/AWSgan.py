@@ -294,7 +294,7 @@ def train():
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
             d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, \
-                                        epochs=1, shuffle=False, verbose=0)
+                   epochs=1, shuffle=False, verbose=0, initial_epoch=epoch)
             d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
  
             # generatorを更新
@@ -302,7 +302,7 @@ def train():
             Xg = n_learn
             yg = [1]*BATCH_SIZE
             g_loss = dcgan.fit(Xg, yg, batch_size=BATCH_SIZE, \
-                                        epochs=2, shuffle=False, verbose=0)
+                   epochs=2, shuffle=False, verbose=0, initial_epoch=epoch)
             g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
             # encoderを更新
@@ -310,7 +310,7 @@ def train():
             Xe = n_learn
             ye = n_learn
             e_loss = autoencoder.fit(Xe, ye, batch_size=BATCH_SIZE, \
-                                        epochs=2, shuffle=False, verbose=0)
+                   epochs=2, shuffle=False, verbose=0, initial_epoch=epoch)
             e_loss = [e_loss.history["loss"][-1],e_loss.history["acc"][-1]]
 
             # 評価
