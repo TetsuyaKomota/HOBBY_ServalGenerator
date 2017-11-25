@@ -5,6 +5,7 @@ from keras.optimizers import Adam
 
 import cv2
 import os
+import numpy as np
 
 from setting import DEMO_EPOCH
 from setting import G_LR
@@ -70,8 +71,9 @@ class Generator:
         self.generator.compile(loss="binary_crossentropy", optimizer=g_opt)
 
     def pick(self, n):
-        img = self.generator.predict(n, verbose=0)
+        img = self.generator.predict(n, verbose=0)[0]
         img = img * 127.5 + 127.5
+        print(img)
         cv2.imshow("G", img)
 
 if __name__ == "__main__":
@@ -95,9 +97,10 @@ if __name__ == "__main__":
         #左クリックがあったら表示
         if mouseData.getEvent() == cv2.EVENT_MOUSEMOVE:
             pos = mouseData.getPos()
-            pos = [(((p[r%2]/5)*r)%100)/50 - 1 for r in range(100)]
-            print(pos)
-            generator.pick(pos) 
+            pos = [(((pos[r%2]/5)*r)%100)/50 - 1 for r in range(100)]
+            # print(pos)
+            generator.pick(np.array([pos]))
+            cv2.waitKey(0)
        #右クリックがあったら終了
         elif mouseData.getEvent() == cv2.EVENT_RBUTTONDOWN:
             break;
