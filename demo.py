@@ -95,7 +95,7 @@ if __name__ == "__main__":
         #左クリックがあったら表示
         if mouseData.getEvent() == cv2.EVENT_MOUSEMOVE:
             pos = mouseData.getPos()
-            pos = [int(p/5) for p in pos]
+            pos = [(((p[r%2]/5)*r)%100)/50 - 1 for r in range(100)]
             print(pos)
             generator.pick(pos) 
        #右クリックがあったら終了
