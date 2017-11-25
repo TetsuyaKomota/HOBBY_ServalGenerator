@@ -348,6 +348,7 @@ def train():
         if epoch % 25 == 0:
             generator.save_weights(g_weights_path + str(epoch) + ".h5")
             discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
+            encoder.save_weights(e_weights_path + str(epoch) + ".h5")
 
 if __name__ == "__main__":
     train()
