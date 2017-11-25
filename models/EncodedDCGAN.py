@@ -295,8 +295,10 @@ def train():
             # 生成画像を出力
             if index % int(num_batches/2) == 0:
                 l = []
-                for n in manager.noizeList:
-                    l.append(generator.predict(n, verbose=0))
+                l.append(generator.predict(noizeList[0], verbose=0))
+                l.append(generator.predict(n_encode[:BATCH_SIZE], verbose=0))
+                l.append(generator.predict(noizeList[1], verbose=0))
+                l.append(generator.predict(noizeList[2], verbose=0))
                 combine_images(l, epoch, index)
 
         if epoch % 25 == 0:
