@@ -236,7 +236,7 @@ def train():
     if os.path.exists(e_weights_load_path):
         encoder.load_weights(e_weights_load_path, by_name=False)
     # generator+encoder （generator部分の重みは固定）
-    autoencoder = Sequential([generator, encoder])
+    autoencoder = Sequential([encoder, generator])
     generator.trainable = False
     autoencoder.compile(loss="mean_squared_error", \
                             optimizer=e_opt, metrics=["accuracy"])
@@ -247,15 +247,14 @@ def train():
     num_batches = int(datas.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
     
-    # ノイズ処理用のマネージャインスタンスを生成
-    manager = InputManager(NEXT_PATTERN)
-
-    # 学習用ノイズを生成
-    noizeList = manager.makeNoize(NOIZE_SIZE, BATCH_SIZE*100)
+    # 学習データロード
+    (datas, _), (_, _) = FriendsLoader.load_data()
 
     # encoderを学習
-    Xe = noizeList
-    ye = noizeList
+    Xe = datas
+    ye = datas
+    datas = (datas.astype(np.float32) - 127.5)/127.5
+    datas = datas.reshape(datas.shape[0], datas.shape[1], datas.shape[2], 3)
     e_loss = autoencoder.fit(Xe, ye, epochs=100)
 
     encoder.save_weights(e_weights_path + str(START_EPOCH) + ".h5")

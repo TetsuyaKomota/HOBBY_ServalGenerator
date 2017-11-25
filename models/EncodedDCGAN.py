@@ -14,9 +14,6 @@ import os
 from keras.optimizers import Adam
 
 import models.FriendsLoader as FriendsLoader
-from models.layers import denseLayer
-from models.layers import deconvLayer
-from models.layers import convLayer
 
 import cv2
 import dill
@@ -52,6 +49,60 @@ from models.InputManager import InputManager
 SAVE_MODEL_PATH = "tmp/save_models/"
 SAVE_NOIZE_PATH = "tmp/save_noizes/"
 GENERATED_IMAGE_PATH = "tmp/"
+
+def denseLayer(filters, init="he_normal", input_shape=None):
+    if input_shape is not None:
+       return Dense(
+                filters,                 \
+                kernel_initializer=init, \
+                input_shape=input_shape  \
+              )
+    else:
+       return Dense(
+                filters,                 \
+                kernel_initializer=init  \
+              )
+
+
+# deconv 層のファクトリーメソッド
+def deconvLayer(filters, init="he_normal", input_shape=None):
+    if input_shape is not None:
+        return Conv2DTranspose(          \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init, \
+                padding="same",          \
+                input_shape=input_shape  \
+               )
+    else:
+        return Conv2DTranspose(          \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init, \
+                padding="same"           \
+               )
+
+
+# conv 層のファクトリーメソッド
+def convLayer(filters, init="he_normal", input_shape=None):
+    if input_shape is not None:
+        return Conv2D(                   \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init, \
+                input_shape=input_shape  \
+               )
+    else:
+        return Conv2D(                   \
+                filters,                 \
+                (5, 5),                  \
+                strides=(2, 2),          \
+                kernel_initializer=init  \
+               )
+
 
 def generator_model():
     model = Sequential()
@@ -214,7 +265,7 @@ def train():
     if os.path.exists(e_weights_load_path):
         encoder.load_weights(e_weights_load_path, by_name=False)
     # generator+encoder （generator部分の重みは固定しない）
-    autoencoder = Sequential([generator, encoder])
+    autoencoder = Sequential([encoder, generator])
     # generator.trainable = False
     autoencoder.compile(loss="mean_squared_error", \
                             optimizer=e_opt, metrics=["accuracy"])
@@ -236,7 +287,7 @@ def train():
         np.random.shuffle(datas)
         
         # 各エポックの最初に，AutoEncoder を学習する
-        e_loss = autoencoder.fit(datas, datas, epochs=10)
+        e_loss = autoencoder.fit(datas, datas, epochs=1)
         e_loss = [e_loss.history["loss"][-1],e_loss.history["acc"][-1]]
 
         # 学習した Encoder で，real のノイズ値を生成する
@@ -295,10 +346,10 @@ def train():
             # 生成画像を出力
             if index % int(num_batches/2) == 0:
                 l = []
-                l.append(generator.predict(noizeList[0], verbose=0))
+                l.append(generator.predict(manager.noizeList[0], verbose=0))
                 l.append(generator.predict(n_encode[:BATCH_SIZE], verbose=0))
-                l.append(generator.predict(noizeList[1], verbose=0))
-                l.append(generator.predict(noizeList[2], verbose=0))
+                l.append(generator.predict(manager.noizeList[1], verbose=0))
+                l.append(generator.predict(manager.noizeList[2], verbose=0))
                 combine_images(l, epoch, index)
 
         if epoch % 25 == 0:
