@@ -28,10 +28,12 @@ from setting import USE_DATA_RATE
 
 from setting import NEXT_PATTERN
 
-from setting import G_LR
-from setting import G_BETA
 from setting import D_LR
 from setting import D_BETA
+from setting import G_LR
+from setting import G_BETA
+from setting import E_LR
+from setting import E_BETA
 
 from setting import STDDEV
 
@@ -141,6 +143,25 @@ def discriminator_model():
     model.add(Activation("sigmoid"))
     return model
 
+def encoder_model():
+    model = Sequential()
+    input_shape = (IMG_SIZE, IMG_SIZE, 3)
+    model.add(convLayer(KERNEL_CORE_SIZE*1, input_shape=input_shape))
+    model.add(LeakyReLU(0.2))
+    model.add(convLayer(KERNEL_CORE_SIZE*2, input_shape=input_shape))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
+    model.add(LeakyReLU(0.2))
+    model.add(convLayer(KERNEL_CORE_SIZE*4, input_shape=input_shape))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
+    model.add(LeakyReLU(0.2))
+    model.add(convLayer(KERNEL_CORE_SIZE*8, input_shape=input_shape))
+    model.add(BatchNormalization(momentum=BN_M, epsilon=BN_E))
+    model.add(LeakyReLU(0.2))
+    model.add(Flatten())
+    model.add(denseLayer(NOIZE_SIZE, init="glorot_normal"))
+    model.add(Activation("tanh"))
+    return model
+
 # 画像を出力する
 # 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
 # 学習画像と出力画像は同じサイズ，枚数を前提
@@ -190,6 +211,9 @@ def train():
     g_json_path    = SAVE_MODEL_PATH + "generator.json"
     g_weights_path = SAVE_MODEL_PATH + "g_w_"
     g_opt          = Adam(lr=G_LR, beta_1=G_BETA)
+    e_json_path    = SAVE_MODEL_PATH + "encoder.json"
+    e_weights_path = SAVE_MODEL_PATH + "e_w_"
+    e_opt          = Adam(lr=E_LR, beta_1=E_BETA)
   
     if os.path.exists(SAVE_MODEL_PATH) == False:
         os.mkdir(SAVE_MODEL_PATH)
@@ -229,6 +253,24 @@ def train():
         f.write(generator.to_json())
     dcgan.summary()
 
+    # Encoder のロードと AutoEncoder のコンパイル
+    if os.path.exists(e_json_path):
+        with open(e_json_path, "r", encoding="utf-8") as f:
+            encoder = model_from_json(f.read())
+    else:
+        encoder = encoder_model()
+    e_weights_load_path = e_weights_path + str(START_EPOCH) + ".h5"
+    if os.path.exists(e_weights_load_path):
+        encoder.load_weights(e_weights_load_path, by_name=False)
+    # generator+encoder （generator部分の重みは固定）
+    autoencoder = Sequential([generator, encoder])
+    generator.trainable = False
+    autoencoder.compile(loss="binary_crossentropy", \
+                            optimizer=e_opt, metrics=["accuracy"])
+    with open(e_json_path, "w", encoding="utf-8") as f:
+        f.write(encoder.to_json())
+    autoencoder.summary()
+
     num_batches = int(datas.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
     
@@ -263,6 +305,13 @@ def train():
                                         epochs=2, shuffle=False, verbose=0)
             g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
+            # encoderを更新
+            # generator に合わせて 2 エポック
+            Xe = n_learn
+            ye = n_learn
+            e_loss = autoencoder.fit(Xe, ye, batch_size=BATCH_SIZE, \
+                                        epochs=2, shuffle=False, verbose=0)
+
             # 評価
             acc = discriminator.evaluate(Xd, yd, \
                                           batch_size=BATCH_SIZE, verbose=0)
@@ -277,11 +326,12 @@ def train():
             pred_g_v = sum([(p-pred_g_m)**2 for p in pred_g])/BATCH_SIZE
  
             t   = "epoch: %d, batch: %d, "
-            t  += "g_loss: [%f, %f], d_loss: [%f, %f], acc: [%f, %f], "
+            t  += "g_loss: [%f, %f], d_loss: [%f, %f], e_loss: [%f, %f], acc: [%f, %f], "
             t  += "predict(m, v)  g(%f, %f) d(%f, %f), "
             tp  = [epoch, index]
             tp += g_loss
             tp += d_loss
+            tp += e_loss
             tp += acc
             tp += [pred_g_m, pred_g_v, pred_d_m, pred_d_v]
             print(t % tuple(tp))

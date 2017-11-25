@@ -79,7 +79,8 @@ class Generator:
 if __name__ == "__main__":
     #入力画像
     read = cv2.imread("tmp/demo/field.png")
-   
+    img  = np.zeros_like(read)
+ 
     #表示するWindow名
     window_name = "input window"
    
@@ -97,7 +98,7 @@ if __name__ == "__main__":
         #左クリックがあったら表示
         if mouseData.getEvent() == cv2.EVENT_MOUSEMOVE:
             pos = mouseData.getPos()
-            pos = [(((pos[r%2]/5)*r)%100)/50 - 1 for r in range(100)]
+            pos = [pos[r%2]/read.shape[0] for r in range(100)]
             # print(pos)
             generator.pick(np.array([pos]))
             cv2.waitKey(0)
