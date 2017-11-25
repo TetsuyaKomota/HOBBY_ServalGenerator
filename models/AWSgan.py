@@ -311,6 +311,7 @@ def train():
             ye = n_learn
             e_loss = autoencoder.fit(Xe, ye, batch_size=BATCH_SIZE, \
                                         epochs=2, shuffle=False, verbose=0)
+            e_loss = [e_loss.history["loss"][-1],e_loss.history["acc"][-1]]
 
             # 評価
             acc = discriminator.evaluate(Xd, yd, \
