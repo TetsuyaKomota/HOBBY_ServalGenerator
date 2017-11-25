@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
 
-# from keras.models import model_from_json
+from keras.models import model_from_json
+from keras.optimizers import Adam
 
 import cv2
 import os
+
+from setting import DEMO_EPOCH
+from setting import G_LR
+from setting import G_BETA
 
 class mouseParam:
     def __init__(self, input_img_name):
@@ -61,6 +66,7 @@ class Generator:
             print("could not found weights of epoch:" + str(epoch))
             exit()
         self.generator.trainable = False
+        g_opt = Adam(lr=G_LR, beta_1=G_BETA)
         self.generator.compile(loss="binary_crossentropy", optimizer=g_opt)
 
     def pick(self, n):
@@ -76,7 +82,7 @@ if __name__ == "__main__":
     window_name = "input window"
    
     # generator のロード
-    # generator = Generator(50)
+    generator = Generator(DEMO_EPOCH)
  
     #画像の表示
     cv2.imshow(window_name, read)
@@ -89,7 +95,7 @@ if __name__ == "__main__":
         #左クリックがあったら表示
         if mouseData.getEvent() == cv2.EVENT_MOUSEMOVE:
             pos = mouseData.getPos()
-            pos = [int(p/10) for p in pos]
+            pos = [int(p/5) for p in pos]
             print(pos)
             generator.pick(pos) 
        #右クリックがあったら終了
