@@ -265,7 +265,7 @@ def train():
     # generator+encoder （generator部分の重みは固定）
     autoencoder = Sequential([generator, encoder])
     generator.trainable = False
-    autoencoder.compile(loss="binary_crossentropy", \
+    autoencoder.compile(loss="mean_squared_error", \
                             optimizer=e_opt, metrics=["accuracy"])
     with open(e_json_path, "w", encoding="utf-8") as f:
         f.write(encoder.to_json())
