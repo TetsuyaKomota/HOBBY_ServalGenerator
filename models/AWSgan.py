@@ -345,7 +345,7 @@ def train():
                     l.append(generator.predict(n, verbose=0))
                 combine_images(l, epoch, index)
 
-        if epoch % 50 == 0:
+        if epoch % 25 == 0:
             generator.save_weights(g_weights_path + str(epoch) + ".h5")
             discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
 
