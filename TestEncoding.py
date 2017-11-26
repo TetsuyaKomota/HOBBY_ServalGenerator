@@ -10,9 +10,10 @@ from keras.optimizers import Adam
 from setting import G_LR
 from setting import G_BETA
 
-model_path = "tmp/save_models/"
-epoch      = 100
+from setting import DEMO_EPOCH
 
+model_path = "tmp/save_models/"
+epoch      = DEMO_EPOCH
 # モデルのロード
 with open(model_path+"generator.json", "r", encoding="utf-8") as f:
     generator   = model_from_json(f.read())
