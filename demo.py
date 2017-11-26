@@ -10,6 +10,8 @@ import numpy as np
 from setting import DEMO_EPOCH
 from setting import G_LR
 from setting import G_BETA
+from setting import E_LR
+from setting import E_BETA
 
 class mouseParam:
     def __init__(self, input_img_name):
@@ -79,32 +81,29 @@ class Generator:
         cv2.imshow("G", img)
 
 # Encoder クラス
-class Generator:
+class Encoder:
     def __init__(self, epoch):
-        g_json_path = "tmp/save_models/generator.json"
-        if os.path.exists(g_json_path):
-            with open(g_json_path, "r", encoding="utf-8") as f:
-               self.generator = model_from_json(f.read())
+        e_json_path = "tmp/save_models/encoder.json"
+        if os.path.exists(e_json_path):
+            with open(e_json_path, "r", encoding="utf-8") as f:
+               self.encoder = model_from_json(f.read())
         else:
             print("could not found json file")
             exit()
-        g_weights_load_path = "tmp/save_models/g_w_" + str(epoch) + ".h5"
-        if os.path.exists(g_weights_load_path):
-            self.generator.load_weights(g_weights_load_path, by_name=False)
+        e_weights_load_path = "tmp/save_models/e_w_" + str(epoch) + ".h5"
+        if os.path.exists(e_weights_load_path):
+            self.encoder.load_weights(e_weights_load_path, by_name=False)
         else:
             print("could not found weights of epoch:" + str(epoch))
             exit()
-        self.generator.trainable = False
-        g_opt = Adam(lr=G_LR, beta_1=G_BETA)
-        self.generator.compile(loss="binary_crossentropy", optimizer=g_opt)
+        self.encoder.trainable = False
+        e_opt = Adam(lr=E_LR, beta_1=E_BETA)
+        self.encoder.compile(loss="binary_crossentropy", optimizer=e_opt)
 
-    def pick(self, n):
-        img = self.generator.predict(n, verbose=0)[0]
-        img = img * 127.5 + 127.5
-        img = img.astype(np.uint8)
-        # print(img)
-        img = cv2.resize(img, (160, 160), interpolation = cv2.INTER_LINEAR)
-        cv2.imshow("G", img)
+    def pick(self, imgName):
+        img = cv2.imread("tmp/friends/"+imgName)
+        img = (img.astype(np.float32)-127.5)/127.5
+        return self.encoder.predict([img], verbose=0)[0]
 
 
 # 四隅の値と座標値を引数に，入力空間上の座標を取得する
@@ -130,6 +129,9 @@ if __name__ == "__main__":
    
     # generator のロード
     generator = Generator(DEMO_EPOCH)
+
+    # Encoder のロード
+    encoder   = Encoder(DEMO_EPOCH)
  
     #画像の表示
     cv2.imshow(window_name, read)
@@ -139,10 +141,10 @@ if __name__ == "__main__":
    
     # 入力空間の四隅のノイズ値
     cornerList = []
-    cornerList.append(np.array([-1 for _ in range(100)]))
-    cornerList.append(np.array([ 0 for _ in range(100)]))
-    cornerList.append(np.array([ 0 for _ in range(100)]))
-    cornerList.append(np.array([ 1 for _ in range(100)]))
+    cornerList.append(encoder.pick("01_01176_00.png"))
+    cornerList.append(encoder.pick("08_03384_01.png"))
+    cornerList.append(encoder.pick("11_13104_00.png"))
+    cornerList.append(encoder.pick("11_15000_00.png"))
  
     while 1:
         cv2.waitKey(20)
