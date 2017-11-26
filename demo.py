@@ -103,7 +103,7 @@ class Encoder:
     def pick(self, imgName):
         img = cv2.imread("tmp/friends/"+imgName)
         img = (img.astype(np.float32)-127.5)/127.5
-        return self.encoder.predict([img], verbose=0)[0]
+        return self.encoder.predict(np.array([img]), verbose=0)[0]
 
 
 # 四隅の値と座標値を引数に，入力空間上の座標を取得する
