@@ -313,10 +313,11 @@ def train():
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images, e_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = discriminator.fit(Xd, yd, batch_size=BATCH_SIZE, \
+            d_batch_size = BATCH_SIZE *(1 + int(epoch>=600))
+            d_loss = discriminator.fit(Xd, yd, batch_size=d_batch_size, \
              epochs=epoch+1, shuffle=False, verbose=0, initial_epoch=epoch)
             d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
- 
+
             # generatorを更新
             # 論文通り，G の学習は 2 エポック行う
             Xg = n_learn
