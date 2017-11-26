@@ -78,6 +78,35 @@ class Generator:
         img = cv2.resize(img, (160, 160), interpolation = cv2.INTER_LINEAR)
         cv2.imshow("G", img)
 
+# Encoder クラス
+class Generator:
+    def __init__(self, epoch):
+        g_json_path = "tmp/save_models/generator.json"
+        if os.path.exists(g_json_path):
+            with open(g_json_path, "r", encoding="utf-8") as f:
+               self.generator = model_from_json(f.read())
+        else:
+            print("could not found json file")
+            exit()
+        g_weights_load_path = "tmp/save_models/g_w_" + str(epoch) + ".h5"
+        if os.path.exists(g_weights_load_path):
+            self.generator.load_weights(g_weights_load_path, by_name=False)
+        else:
+            print("could not found weights of epoch:" + str(epoch))
+            exit()
+        self.generator.trainable = False
+        g_opt = Adam(lr=G_LR, beta_1=G_BETA)
+        self.generator.compile(loss="binary_crossentropy", optimizer=g_opt)
+
+    def pick(self, n):
+        img = self.generator.predict(n, verbose=0)[0]
+        img = img * 127.5 + 127.5
+        img = img.astype(np.uint8)
+        # print(img)
+        img = cv2.resize(img, (160, 160), interpolation = cv2.INTER_LINEAR)
+        cv2.imshow("G", img)
+
+
 # 四隅の値と座標値を引数に，入力空間上の座標を取得する
 # 四隅の値は numpy.array 前提
 def mapping(cornerList, pos, fieldSize):
