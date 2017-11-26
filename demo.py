@@ -74,7 +74,7 @@ class Generator:
         img = self.generator.predict(n, verbose=0)[0]
         img = img * 127.5 + 127.5
         img = img.astype(np.uint8)
-        print(img)
+        # print(img)
         img = cv2.resize(img, (160, 160), interpolation = cv2.INTER_LINEAR)
         cv2.imshow("G", img)
 
@@ -82,12 +82,13 @@ class Generator:
 # 四隅の値は numpy.array 前提
 def mapping(cornerList, pos, fieldSize):
     # 座標を [0, 1] 正規化する
-    normalPos = pos/750
+    normalPos = [pos[0]/fieldSize, pos[1]/fieldSize]
+    print(normalPos)
     # x方向の2辺の内点を取る
     left  = cornerList[0]*normalPos[0] + cornerList[1]*(1-normalPos[0])
     right = cornerList[2]*normalPos[0] + cornerList[3]*(1-normalPos[0])
     # 内点同士の内点を取る
-    return left*normalPos[1] + right*normalPos[1]
+    return left*normalPos[1] + right*(1-normalPos[1])
 
 if __name__ == "__main__":
     #入力画像
@@ -109,10 +110,10 @@ if __name__ == "__main__":
    
     # 入力空間の四隅のノイズ値
     cornerList = []
-    cornerList.append([0.0 for _ in range(100)])
-    cornerList.append([0.5 for _ in range(100)])
-    cornerList.append([0.5 for _ in range(100)])
-    cornerList.append([1.0 for _ in range(100)])
+    cornerList.append(np.array([-1 for _ in range(100)]))
+    cornerList.append(np.array([ 0 for _ in range(100)]))
+    cornerList.append(np.array([ 0 for _ in range(100)]))
+    cornerList.append(np.array([ 1 for _ in range(100)]))
  
     while 1:
         cv2.waitKey(20)
