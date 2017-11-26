@@ -78,10 +78,22 @@ class Generator:
         img = cv2.resize(img, (160, 160), interpolation = cv2.INTER_LINEAR)
         cv2.imshow("G", img)
 
+# 四隅の値と座標値を引数に，入力空間上の座標を取得する
+# 四隅の値は numpy.array 前提
+def mapping(cornerList, pos, fieldSize):
+    # 座標を [0, 1] 正規化する
+    normalPos = pos/750
+    # x方向の2辺の内点を取る
+    left  = cornerList[0]*normalPos[0] + cornerList[1]*(1-normalPos[0])
+    right = cornerList[2]*normalPos[0] + cornerList[3]*(1-normalPos[0])
+    # 内点同士の内点を取る
+    return left*normalPos[1] + right*normalPos[1]
+
 if __name__ == "__main__":
     #入力画像
     read = cv2.imread("tmp/demo/field.png")
     img  = np.zeros_like(read)
+    size = read.shape[0]
  
     #表示するWindow名
     window_name = "input window"
@@ -94,13 +106,21 @@ if __name__ == "__main__":
     
     #コールバックの設定
     mouseData = mouseParam(window_name)
-    
+   
+    # 入力空間の四隅のノイズ値
+    cornerList = []
+    cornerList.append([0.0 for _ in range(100)])
+    cornerList.append([0.5 for _ in range(100)])
+    cornerList.append([0.5 for _ in range(100)])
+    cornerList.append([1.0 for _ in range(100)])
+ 
     while 1:
         cv2.waitKey(20)
         #左クリックがあったら表示
         if mouseData.getEvent() == cv2.EVENT_MOUSEMOVE:
             pos = mouseData.getPos()
-            pos = [(pos[r%2]/750)*2 - 1 for r in range(100)]
+            # pos = [(pos[r%2]/750)*2 - 1 for r in range(100)]
+            pos = mapping(cornerList, pos, size)
             generator.pick(np.array([pos]))
        #右クリックがあったら終了
         elif mouseData.getEvent() == cv2.EVENT_RBUTTONDOWN:
