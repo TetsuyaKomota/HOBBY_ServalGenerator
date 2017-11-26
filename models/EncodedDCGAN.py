@@ -205,7 +205,8 @@ def combine_images(learn, epoch, batch, path="output/"):
 def train():
     (datas, _), (_, _) = FriendsLoader.load_data()
     datas = (datas.astype(np.float32) - 127.5)/127.5
-    datas = datas.reshape(datas.shape[0], datas.shape[1], datas.shape[2], 3)
+    shape = datas.shape
+    datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
     d_json_path    = SAVE_MODEL_PATH + "discriminator.json"
     d_weights_path = SAVE_MODEL_PATH + "d_w_"
@@ -264,9 +265,14 @@ def train():
     e_weights_load_path = e_weights_path + str(START_EPOCH) + ".h5"
     if os.path.exists(e_weights_load_path):
         encoder.load_weights(e_weights_load_path, by_name=False)
-    # generator+encoder （generator部分の重みは固定しない）
+    # encoder+generator
+    # initializer は G を固定せず，G の初期化を担当
+    # autoencoder は G を固定して，E を学習する
+    initializer = Sequential([encoder, generator])
     autoencoder = Sequential([encoder, generator])
-    # generator.trainable = False
+    initializer.compile(loss="mean_squared_error", \
+                            optimizer=e_opt, metrics=["accuracy"])
+    generator.trainable = False
     autoencoder.compile(loss="mean_squared_error", \
                             optimizer=e_opt, metrics=["accuracy"])
     with open(e_json_path, "w", encoding="utf-8") as f:
@@ -285,11 +291,12 @@ def train():
 
     for epoch in range(START_EPOCH, NUM_EPOCH):
         np.random.shuffle(datas)
-        
-        # 各エポックの最初に，AutoEncoder を学習する
-        e_loss = autoencoder.fit(datas, datas, epochs=1)
-        e_loss = [e_loss.history["loss"][-1],e_loss.history["acc"][-1]]
-
+       
+        # 100 エポックごとに，G をエンコーダ目線で初期化する
+        if epoch % 100 == 0:
+            i_loss = initializer.fit(datas, datas, epochs=100)
+            i_loss = [i_loss.history["loss"][-1],i_loss.history["acc"][-1]]
+ 
         # 学習した Encoder で，real のノイズ値を生成する
         n_encode = encoder.predict(datas, verbose=0)
         np.random.shuffle(n_encode)
@@ -318,6 +325,13 @@ def train():
              epochs=epoch+2, shuffle=False, verbose=0, initial_epoch=epoch)
             g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
+            # encoderを更新
+            Xe = d_images
+            ye = d_images
+            e_loss = autoencoder.fit(Xe, ye, batch_size=BATCH_SIZE, \
+             epochs=epoch+2, shuffle=False, verbose=0, initial_epoch=epoch)
+            e_loss = [e_loss.history["loss"][-1],e_loss.history["acc"][-1]]
+
             # 評価
             acc = discriminator.evaluate(Xd, yd, \
                                           batch_size=BATCH_SIZE, verbose=0)
@@ -332,12 +346,14 @@ def train():
             pred_g_v = sum([(p-pred_g_m)**2 for p in pred_g])/BATCH_SIZE
  
             t   = "epoch: %d, batch: %d, "
-            t  += "g_loss: [%f, %f], d_loss: [%f, %f], e_loss: [%f, %f], acc: [%f, %f], "
+            t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
+            t  += "e_loss: [%f, %f], i_loss: [%f, %f], acc: [%f, %f], "
             t  += "predict(m, v)  g(%f, %f) d(%f, %f), "
             tp  = [epoch, index]
             tp += g_loss
             tp += d_loss
             tp += e_loss
+            tp += i_loss
             tp += acc
             tp += [pred_g_m, pred_g_v, pred_d_m, pred_d_v]
             print(t % tuple(tp))
