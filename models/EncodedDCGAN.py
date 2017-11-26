@@ -292,20 +292,20 @@ def train():
     for epoch in range(START_EPOCH, NUM_EPOCH):
         np.random.shuffle(datas)
        
-        # 100 エポックごとに，G をエンコーダ目線で初期化する
-        if epoch % 100 == 0:
-            i_loss = initializer.fit(datas, datas, epochs=100)
+        # エポックごとに，G をエンコーダ目線で初期化する
+        if epoch % 1 == 0:
+            i_loss = initializer.fit(datas, datas, epochs=1)
             i_loss = [i_loss.history["loss"][-1],i_loss.history["acc"][-1]]
  
         # 学習した Encoder で，real のノイズ値を生成する
         n_encode = encoder.predict(datas, verbose=0)
-        np.random.shuffle(n_encode)
 
         for index in range(num_batches):
             # 次に学習に使用するノイズセットを取得する
             batch_g = int(BATCH_SIZE/2)
             batch_e = BATCH_SIZE - batch_g
             n_learn = manager.next(epoch, gList)
+            np.random.shuffle(n_encode)
             g_images = generator.predict(n_learn[:batch_g], verbose=0)
             e_images = generator.predict(n_encode[:batch_e], verbose=0)
             d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
@@ -360,7 +360,7 @@ def train():
             logfile.write((t+"\n") % tuple(tp))
 
             # 生成画像を出力
-            if index % int(num_batches/2) == 0:
+            if index % int(num_batches/2) == 0 or index == num_batches-1:
                 l = []
                 l.append(generator.predict(manager.noizeList[0], verbose=0))
                 l.append(generator.predict(n_encode[:BATCH_SIZE], verbose=0))
