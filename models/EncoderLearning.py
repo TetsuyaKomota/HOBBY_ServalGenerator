@@ -227,6 +227,8 @@ def train():
     g_weights_load_path = g_weights_path + str(START_EPOCH) + ".h5"
     if os.path.exists(g_weights_load_path):
         generator.load_weights(g_weights_load_path, by_name=False)
+    else:
+        print("could not load g_w")
     if os.path.exists(e_json_path):
         with open(e_json_path, "r", encoding="utf-8") as f:
             encoder = model_from_json(f.read())
@@ -235,6 +237,8 @@ def train():
     e_weights_load_path = e_weights_path + str(START_EPOCH) + ".h5"
     if os.path.exists(e_weights_load_path):
         encoder.load_weights(e_weights_load_path, by_name=False)
+    else:
+        print("could not load e_w")
     # generator+encoder （generator部分の重みは固定）
     autoencoder = Sequential([encoder, generator])
     generator.trainable = False
@@ -258,6 +262,7 @@ def train():
     e_loss = autoencoder.fit(Xe, ye, epochs=100)
 
     encoder.save_weights(e_weights_path + str(START_EPOCH) + ".h5")
+    generator.save_weights(e_weights_path + str(START_EPOCH) + ".h5")
 
 
 if __name__ == "__main__":

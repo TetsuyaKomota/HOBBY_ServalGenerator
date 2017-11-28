@@ -24,6 +24,7 @@ from setting import BATCH_SIZE
 from setting import KERNEL_CORE_SIZE
 from setting import START_EPOCH
 from setting import NUM_EPOCH
+from setting import SPAN_CHECKPOINT
 from setting import SPAN_UPDATE_NOIZE
 
 from setting import USE_DATA_RATE
@@ -293,10 +294,11 @@ def train():
         np.random.shuffle(datas)
        
         # エポックごとに，G をエンコーダ目線で初期化する
-        if epoch % 1 == 0:
-            i_loss = initializer.fit(datas, datas, epochs=1)
+        i_loss = [999, 999]
+        if epoch % SPAN_CHECKPOINT == 0:
+            i_loss = initializer.fit(datas, datas, epochs=100)
             i_loss = [i_loss.history["loss"][-1],i_loss.history["acc"][-1]]
- 
+
         # 学習した Encoder で，real のノイズ値を生成する
         n_encode = encoder.predict(datas, verbose=0)
 
@@ -313,14 +315,14 @@ def train():
             # discriminatorを更新
             Xd = np.concatenate((d_images, g_images, e_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_batch_size = BATCH_SIZE *(1 + int(epoch>=600))
+            d_batch_size = BATCH_SIZE *(1 + int(epoch>=100))
             d_loss = discriminator.fit(Xd, yd, batch_size=d_batch_size, \
              epochs=epoch+1, shuffle=False, verbose=0, initial_epoch=epoch)
             d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
             # generatorを更新
             # 論文通り，G の学習は 2 エポック行う
-            Xg = n_learn
+            Xg = np.concatenate((n_learn[:batch_g], n_encode[:batch_e]))
             yg = [1]*BATCH_SIZE
             g_loss = dcgan.fit(Xg, yg, batch_size=BATCH_SIZE, \
              epochs=epoch+2, shuffle=False, verbose=0, initial_epoch=epoch)
@@ -361,7 +363,7 @@ def train():
             logfile.write((t+"\n") % tuple(tp))
 
             # 生成画像を出力
-            if index % int(num_batches/2) == 0 or index == num_batches-1:
+            if index % int(num_batches/2) == 0:
                 l = []
                 l.append(generator.predict(manager.noizeList[0], verbose=0))
                 l.append(generator.predict(n_encode[:BATCH_SIZE], verbose=0))
@@ -369,7 +371,7 @@ def train():
                 l.append(generator.predict(manager.noizeList[2], verbose=0))
                 combine_images(l, epoch, index)
 
-        if epoch % 25 == 0:
+        if epoch % SPAN_CHECKPOINT == 0:
             generator.save_weights(g_weights_path + str(epoch) + ".h5")
             discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
             encoder.save_weights(e_weights_path + str(epoch) + ".h5")
