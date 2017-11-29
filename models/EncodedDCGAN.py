@@ -323,6 +323,13 @@ def train():
             i_loss = initializer.fit(datas, datas, epochs=1)
             i_loss = [i_loss.history["loss"][-1],i_loss.history["acc"][-1]]
 
+        # GAN の直後より オートエンコーダの直後の方がきれいな画像に
+        # なるので，このタイミングでモデルをセーブする
+        if epoch % SPAN_CHECKPOINT == 0:
+            generator.save_weights(g_weights_path + str(epoch) + ".h5")
+            discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
+            encoder.save_weights(e_weights_path + str(epoch) + ".h5")
+
         # 学習した Encoder で，real のノイズ値を生成する
         n_encode = encoder.predict(datas, verbose=0)
 
@@ -395,11 +402,6 @@ def train():
                 l.append(generator.predict(manager.noizeList[1], verbose=0))
                 l.append(generator.predict(manager.noizeList[2], verbose=0))
                 combine_images(l, epoch, index)
-
-        if epoch % SPAN_CHECKPOINT == 0:
-            generator.save_weights(g_weights_path + str(epoch) + ".h5")
-            discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
-            encoder.save_weights(e_weights_path + str(epoch) + ".h5")
 
 if __name__ == "__main__":
     train()
