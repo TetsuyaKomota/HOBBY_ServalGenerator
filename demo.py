@@ -141,6 +141,7 @@ if __name__ == "__main__":
    
     # 入力空間の四隅のノイズ値
     cornerList = []
+    """
     cornerList.append(encoder.pick("01_01176_00.png")) # サーバルちゃん
     cornerList.append(encoder.pick("08_03384_01.png")) # かばんちゃん
     cornerList.append(encoder.pick("11_13104_00.png")) # アライさん
@@ -150,7 +151,6 @@ if __name__ == "__main__":
     cornerList.append(encoder.pick("01_05856_00.png")) # サーバルちゃん
     cornerList.append(encoder.pick("01_23496_00.png")) # サーバルちゃん
     cornerList.append(encoder.pick("06_14112_00.png")) # サーバルちゃん
-    """
     while 1:
         cv2.waitKey(20)
         #左クリックがあったら表示
