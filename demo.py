@@ -8,6 +8,10 @@ import os
 import numpy as np
 
 from setting import DEMO_EPOCH
+from setting import DEMO_IMG_1
+from setting import DEMO_IMG_2
+from setting import DEMO_IMG_3
+from setting import DEMO_IMG_4
 from setting import G_LR
 from setting import G_BETA
 from setting import E_LR
@@ -141,16 +145,10 @@ if __name__ == "__main__":
    
     # 入力空間の四隅のノイズ値
     cornerList = []
-    """
-    cornerList.append(encoder.pick("01_01176_00.png")) # サーバルちゃん
-    cornerList.append(encoder.pick("08_03384_01.png")) # かばんちゃん
-    cornerList.append(encoder.pick("11_13104_00.png")) # アライさん
-    cornerList.append(encoder.pick("11_15000_00.png")) # フェネック
-    """
-    cornerList.append(encoder.pick("01_04440_00.png")) # サーバルちゃん
-    cornerList.append(encoder.pick("01_05856_00.png")) # サーバルちゃん
-    cornerList.append(encoder.pick("01_23496_00.png")) # サーバルちゃん
-    cornerList.append(encoder.pick("06_14112_00.png")) # サーバルちゃん
+    cornerList.append(encoder.pick(DEMO_IMG_1))
+    cornerList.append(encoder.pick(DEMO_IMG_2))
+    cornerList.append(encoder.pick(DEMO_IMG_3))
+    cornerList.append(encoder.pick(DEMO_IMG_4))
     while 1:
         cv2.waitKey(20)
         #左クリックがあったら表示
