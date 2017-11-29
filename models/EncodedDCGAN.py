@@ -203,21 +203,27 @@ def combine_images(learn, epoch, batch, path="output/"):
 
     return output
 
+# 某折り過程で総和 1 のノイズリストを生成する
+def SBP(size):
+    output = []
+    rest = 1
+    for _ in range(size-1):
+        output.append(rest*np.random.random_sample(1)[0])
+        rest -= output[-1]
+    output.append(rest)
+    return output
+
 # ノイズのリストから，ランダムに線形和した別のノイズのリストを生成する
+# 重みが一様分布だと線形和は平均に偏在してしまうので，
+# SBP を用いてみる
 def makeLinearNoize(noizeList, num):
-    dim = len(noizeList[0])
+    size   = len(noizeList)
     output = []
     for _ in range(num):
-        # SBP で和が 1 の num 個の重みを生成する
-        rest = 1
-        w    = []
-        for _ in range(dim-1):
-            w.append(rest * random.random())
-            rest -= w[-1]
-        w.append(rest)
-        np.random.shuffle(w)
-        output.append(sum([w[i]*noizeList[i] for i in range(dim)]))
-    return output
+        # w = np.random.random_sample(size)
+        w = SBP(size)
+        output.append(sum([w[i]*noizeList[i] for i in range(size)]))
+    return np.array(output)
 
 def train():
     (datas, _), (_, _) = FriendsLoader.load_data()
@@ -322,9 +328,9 @@ def train():
             # 次に学習に使用するノイズセットを取得する
             batch_g = int(BATCH_SIZE/2)
             batch_e = BATCH_SIZE - batch_g
+            np.random.shuffle(n_encode)
             # n_learn = manager.next(epoch, gList)
             n_learn = makeLinearNoize(n_encode, BATCH_SIZE)
-            np.random.shuffle(n_encode)
             g_images = generator.predict(n_learn[:batch_g], verbose=0)
             e_images = generator.predict(n_encode[:batch_e], verbose=0)
             d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
@@ -382,7 +388,7 @@ def train():
             # 生成画像を出力
             if index % int(num_batches/2) == 0:
                 l = []
-                l.append(generator.predict(manager.noizeList[0], verbose=0))
+                l.append(generator.predict(n_learn[ :BATCH_SIZE], verbose=0))
                 l.append(generator.predict(n_encode[:BATCH_SIZE], verbose=0))
                 l.append(generator.predict(manager.noizeList[1], verbose=0))
                 l.append(generator.predict(manager.noizeList[2], verbose=0))
