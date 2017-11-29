@@ -332,7 +332,7 @@ def train():
             batch_e = BATCH_SIZE - batch_g
             np.random.shuffle(n_encode)
             # n_learn = manager.next(epoch, gList)
-            n_learn = makeLinearNoize(n_encode, BATCH_SIZE)
+            n_learn = makeLinearNoize(n_encode[:BATCH_SIZE], BATCH_SIZE)
             g_images = generator.predict(n_learn[:batch_g], verbose=0)
             e_images = generator.predict(n_encode[:batch_e], verbose=0)
             d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
