@@ -203,6 +203,22 @@ def combine_images(learn, epoch, batch, path="output/"):
 
     return output
 
+# ノイズのリストから，ランダムに線形和した別のノイズのリストを生成する
+def makeLinearNoize(noizeList, num):
+    dim = len(noizeList[0])
+    output = []
+    for _ in range(num):
+        # SBP で和が 1 の num 個の重みを生成する
+        rest = 1
+        w    = []
+        for _ in range(dim-1):
+            w.append(rest * random.random())
+            rest -= w[-1]
+        w.append(rest)
+        np.random.shuffle(w)
+        output.append(sum([w[i]*noizeList[i] for i in range(dim)]))
+    return output
+
 def train():
     (datas, _), (_, _) = FriendsLoader.load_data()
     datas = (datas.astype(np.float32) - 127.5)/127.5
@@ -295,8 +311,8 @@ def train():
        
         # エポックごとに，G をエンコーダ目線で初期化する
         i_loss = [999, 999]
-        if epoch % SPAN_CHECKPOINT == 0:
-            i_loss = initializer.fit(datas, datas, epochs=100)
+        if True or epoch % SPAN_CHECKPOINT == 0:
+            i_loss = initializer.fit(datas, datas, epochs=1)
             i_loss = [i_loss.history["loss"][-1],i_loss.history["acc"][-1]]
 
         # 学習した Encoder で，real のノイズ値を生成する
@@ -306,7 +322,8 @@ def train():
             # 次に学習に使用するノイズセットを取得する
             batch_g = int(BATCH_SIZE/2)
             batch_e = BATCH_SIZE - batch_g
-            n_learn = manager.next(epoch, gList)
+            # n_learn = manager.next(epoch, gList)
+            n_learn = makeLinearNoize(n_encode, BATCH_SIZE)
             np.random.shuffle(n_encode)
             g_images = generator.predict(n_learn[:batch_g], verbose=0)
             e_images = generator.predict(n_encode[:batch_e], verbose=0)
