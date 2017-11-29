@@ -204,13 +204,15 @@ def combine_images(learn, epoch, batch, path="output/"):
     return output
 
 # 某折り過程で総和 1 のノイズリストを生成する
-def SBP(size):
+def SBP(size, shuffle=True):
     output = []
     rest = 1
     for _ in range(size-1):
         output.append(rest*np.random.random_sample(1)[0])
         rest -= output[-1]
     output.append(rest)
+    if shuffle == True:
+        np.random.shuffle(output)
     return output
 
 # ノイズのリストから，ランダムに線形和した別のノイズのリストを生成する
