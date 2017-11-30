@@ -208,30 +208,6 @@ def combine_images(learn, epoch, batch, path="output/"):
 
     return output
 
-# 某折り過程で総和 1 のノイズリストを生成する
-def SBP(size, shuffle=True):
-    output = []
-    rest = 1
-    for _ in range(size-1):
-        output.append(rest*np.random.random_sample(1)[0])
-        rest -= output[-1]
-    output.append(rest)
-    if shuffle == True:
-        np.random.shuffle(output)
-    return output
-
-# ノイズのリストから，ランダムに線形和した別のノイズのリストを生成する
-# 重みが一様分布だと線形和は平均に偏在してしまうので，
-# SBP を用いてみる
-def makeLinearNoize(noizeList, num):
-    size   = len(noizeList)
-    output = []
-    for _ in range(num):
-        # w = np.random.random_sample(size)
-        w = SBP(size)
-        output.append(sum([w[i]*noizeList[i] for i in range(size)]))
-    return np.array(output)
-
 def train():
     (datas, _), (_, _) = FriendsLoader.load_data()
     datas = (datas.astype(np.float32) - 127.5)/127.5
@@ -292,12 +268,19 @@ def train():
         f.write(generator.to_json())
     generator.summary()
 
-    # E+G のコンパイル
+    # initializer のコンパイル
+    encoder.trainable       = True
+    generator.trainable     = True
+    discriminator.trainable = True
+    initializer = Sequential([encoder, generator])
+    initializer.compile(loss="mean_squared_error", \
+                            optimizer=e_opt, metrics=["accuracy"])
+
+     # E+G のコンパイル
     encoder.trainable       = True
     generator.trainable     = False
     discriminator.trainable = True
     autoencoder = Sequential([encoder, generator])
-    generator.trainable = False
     autoencoder.compile(loss="mean_squared_error", \
                             optimizer=e_opt, metrics=["accuracy"])
  
@@ -326,6 +309,9 @@ def train():
     # ログを出力する
     logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
 
+    # 初めに initializer により学習する
+    initializer.fit(datas, datas, epochs=10)
+
     for epoch in range(START_EPOCH, NUM_EPOCH):
         np.random.shuffle(datas)
        
@@ -336,11 +322,10 @@ def train():
             discriminator.save_weights(d_weights_path + str(epoch) + ".h5")
             encoder.save_weights(e_weights_path + str(epoch) + ".h5")
 
-
         for index in range(num_batches):
             # Encoder でノイズ値を生成する
-            rand_img = random.sample(datas, BATCH_SIZE)
-            g_images = autoencoder.predict(np.array(rand_img),verbose=0)
+            rand_img = random.sample(list(datas), BATCH_SIZE)
+            g_images = autoencoder.predict(np.array(rand_img), verbose=0)
             d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # discriminatorを更新
@@ -381,13 +366,12 @@ def train():
  
             t   = "epoch: %d, batch: %d, "
             t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
-            t  += "e_loss: [%f, %f], i_loss: [%f, %f], acc: [%f, %f], "
+            t  += "e_loss: [%f, %f], acc: [%f, %f], "
             t  += "predict(m, v)  g(%f, %f) d(%f, %f), "
             tp  = [epoch, index]
             tp += g_loss
             tp += d_loss
             tp += e_loss
-            tp += i_loss
             tp += acc
             tp += [pred_g_m, pred_g_v, pred_d_m, pred_d_v]
             print(t % tuple(tp))
@@ -395,11 +379,12 @@ def train():
 
             # 生成画像を出力
             if index % int(num_batches/2) == 0:
+                n_encode = encoder.predict(d_images, verbose=0)
                 l = []
-                l.append(generator.predict(n_learn[ :BATCH_SIZE], verbose=0))
                 l.append(generator.predict(n_encode[:BATCH_SIZE], verbose=0))
                 l.append(generator.predict(manager.noizeList[1], verbose=0))
                 l.append(generator.predict(manager.noizeList[2], verbose=0))
+                l.append(generator.predict(manager.noizeList[3], verbose=0))
                 combine_images(l, epoch, index)
 
 if __name__ == "__main__":
