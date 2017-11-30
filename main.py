@@ -3,7 +3,8 @@
 # from models import gan
 # from models import AWSgan as gan
 # from models import EncoderLearning as gan
-from models import EncodedDCGAN as gan
+# from models import EncodedDCGAN as gan
+from models import EDCGANv5 as gan
 from setting import IS_RESET_MODEL
 from setting import IS_RESET_NOIZE
 
