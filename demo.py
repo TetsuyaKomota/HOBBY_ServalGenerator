@@ -6,8 +6,10 @@ from keras.optimizers import Adam
 import cv2
 import os
 import numpy as np
+import glob
 
 from setting import DEMO_EPOCH
+from setting import DEMO_IMG_RANDOM
 from setting import DEMO_IMG_1
 from setting import DEMO_IMG_2
 from setting import DEMO_IMG_3
@@ -145,10 +147,17 @@ if __name__ == "__main__":
    
     # 入力空間の四隅のノイズ値
     cornerList = []
-    cornerList.append(encoder.pick(DEMO_IMG_1))
-    cornerList.append(encoder.pick(DEMO_IMG_2))
-    cornerList.append(encoder.pick(DEMO_IMG_3))
-    cornerList.append(encoder.pick(DEMO_IMG_4))
+    if DEMO_IMG_RANDOM == True:
+        imgpaths = list(glob.glob("tmp/friends/*.png"))
+        np.random.shuffle(imgpaths)
+        for i in range(4):
+            imgname = os.path.basename(imgpaths[i])
+            cornerList.append(encoder.pick(imgname))
+    else:
+        cornerList.append(encoder.pick(DEMO_IMG_1))
+        cornerList.append(encoder.pick(DEMO_IMG_2))
+        cornerList.append(encoder.pick(DEMO_IMG_3))
+        cornerList.append(encoder.pick(DEMO_IMG_4))
     while 1:
         cv2.waitKey(20)
         #左クリックがあったら表示
