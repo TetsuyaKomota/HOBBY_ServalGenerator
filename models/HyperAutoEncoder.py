@@ -248,33 +248,39 @@ def train():
     # r は再帰回数
     r = 4
     for epoch in range(NUM_EPOCH):
-        X = list(datas)
-        y = list(datas)
-        for i in range(r):
-            X += list(initializer.predict(np.array(X[-1*datas.shape[0]:]), verbose=0))
-            y += list(datas)
-        i_loss = initializer.fit(np.array(X), np.array(y), \
-                batch_size=BATCH_SIZE, epochs=1)
-        loss = []
-        for i in range(r):
-            t = [i_loss.history["loss"][i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
-            t += [i_loss.history["acc"][i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
-            loss.append(t)
+        for index in range(num_batches):
+            # Encoder でノイズ値を生成する
+            d_batch = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
-        # 出力の様子を確認
-        t   = "epoch: %d"
-        tp  = [epoch]
-        for i in range(r):
-            t  += "loss_" + str(i) + ": [%f, %f], "
-            tp += loss[i]
-        print(t % tuple(tp))
-        logfile.write((t+"\n") % tuple(tp))
 
-        # 生成画像を出力
-        l = []
-        for i in range(4):
-            l.append([output[i][20*j] for j in range(BATCH_SIZE)])
-        combine_images(l, epoch, 0)
+            X = list(d_batch)
+            y = list(d_batch)
+            for i in range(r):
+                X += list(initializer.predict(np.array(X[-1*BATCH_SIZE:]), verbose=0))
+                y += list(d_batch)
+            i_loss = initializer.fit(np.array(X), np.array(y), \
+                    batch_size=BATCH_SIZE, epochs=1, verbose=0)
+            loss = []
+            for i in range(r):
+                t = [i_loss.history["loss"][i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
+                t += [i_loss.history["acc"][i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
+                loss.append(t)
+
+            # 出力の様子を確認
+            t   = "epoch: %d"
+            tp  = [epoch]
+            for i in range(r):
+                t  += "loss_" + str(i) + ": [%f, %f], "
+                tp += loss[i]
+            print(t % tuple(tp))
+            logfile.write((t+"\n") % tuple(tp))
+
+            # 生成画像を出力
+            if index % int(num_batches/2) == 0:
+                l = []
+                for i in range(4):
+                    l.append([output[i][20*j] for j in range(BATCH_SIZE)])
+                combine_images(l, epoch, 0)
 
 if __name__ == "__main__":
     train()
