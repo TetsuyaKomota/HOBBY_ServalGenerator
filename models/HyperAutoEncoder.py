@@ -12,6 +12,7 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers import Flatten, Dropout
 from keras.initializers import RandomNormal as rand
 from keras.initializers import TruncatedNormal as trunc
+from keras.callbacks import EarlyStopping
 import math
 import numpy as np
 import os
@@ -201,7 +202,9 @@ def train():
     e_json_path    = SAVE_MODEL_PATH + "encoder.json"
     e_weights_path = SAVE_MODEL_PATH + "e_w_"
     e_opt          = Adam(lr=E_LR, beta_1=E_BETA)
-  
+ 
+    stopping       = EarlyStopping(monitor="loss")
+
     if os.path.exists(SAVE_MODEL_PATH) == False:
         os.mkdir(SAVE_MODEL_PATH)
     if os.path.exists(SAVE_NOIZE_PATH) == False:
@@ -234,53 +237,22 @@ def train():
     generator.summary()
 
     # コンパイル
-    initializer = Sequential([encoder, generator])
-    initializer.compile(loss="mean_squared_error", \
-                            optimizer=e_opt, metrics=["accuracy"])
+    mill = []
+    for i in range(10):
+        mill += [encoder, generator]
+        initializer = Sequential(mill)
+        initializer.compile(loss="mean_squared_error", \
+                              optimizer=e_opt, metrics=["accuracy"])
 
-    num_batches = int(datas.shape[0] / BATCH_SIZE)
-    print('Number of batches:', num_batches)
-    
-    # ログを出力する
-    logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
-
-    # AutoEncoder を再帰的に学習する
-    # r は再帰回数
-    r = 4
-    for epoch in range(NUM_EPOCH):
-        for index in range(num_batches):
-            # Encoder でノイズ値を生成する
-            d_batch = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
-
-
-            X = list(d_batch)
-            y = list(d_batch)
-            for i in range(r):
-                X += list(initializer.predict(np.array(X[-1*BATCH_SIZE:]), verbose=0))
-                y += list(d_batch)
-            i_loss = initializer.fit(np.array(X), np.array(y), \
-                    batch_size=BATCH_SIZE, epochs=1, verbose=0)
-            loss = []
-            for i in range(r):
-                t = [i_loss.history["loss"][i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
-                t += [i_loss.history["acc"][i*BATCH_SIZE:(i+1)*BATCH_SIZE]]
-                loss.append(t)
-
-            # 出力の様子を確認
-            t   = "epoch: %d"
-            tp  = [epoch]
-            for i in range(r):
-                t  += "loss_" + str(i) + ": [%f, %f], "
-                tp += loss[i]
-            print(t % tuple(tp))
-            logfile.write((t+"\n") % tuple(tp))
-
-            # 生成画像を出力
-            if index % int(num_batches/2) == 0:
-                l = []
-                for i in range(4):
-                    l.append([output[i][20*j] for j in range(BATCH_SIZE)])
-                combine_images(l, epoch, 0)
+        initializer.fit(datas,datas,epochs=100,callbacks=[stopping])
+        generator.save_weights(g_weights_path + str(i) + ".h5")
+        encoder.save_weights(e_weights_path + str(i) + ".h5")
+        l = []
+        l.append(initializer.predict(datas[:BATCH_SIZE], verbose=0))
+        l.append(initializer.predict(datas[:BATCH_SIZE], verbose=0))
+        l.append(initializer.predict(datas[:BATCH_SIZE], verbose=0))
+        l.append(initializer.predict(datas[:BATCH_SIZE], verbose=0))
+        combine_images(l, i, 0)
 
 if __name__ == "__main__":
     train()
