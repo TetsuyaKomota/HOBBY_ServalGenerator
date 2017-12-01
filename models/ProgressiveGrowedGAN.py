@@ -24,7 +24,8 @@ import models.FriendsLoader as FriendsLoader
 # filters : 入力の filter 数
 def getAdditionalBlock_G(filters):
     model = Sequential()
-    model.add(UpSampling2D((2, 2)))
+    layerSize = 2048/filters
+    model.add(UpSampling2D((2, 2), imput_shape=(filters, layerSize, layerSize)))
     model.add(Conv2D(filters/2, (3, 3), padding="same"))
     model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
@@ -36,7 +37,8 @@ def getAdditionalBlock_G(filters):
 # filters : 出力の filter 数
 def getAdditionalBlock_D(filters):
     model = Sequential()
-    model.add(Conv2D(filters/2, (3, 3), padding="same"))
+    layerSize = (2048/filters) * 2
+    model.add(Conv2D(filters/2, (3, 3), padding="same", input_shape=(filters/2, layerSize, layerSize)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(filters,   (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
