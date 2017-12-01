@@ -29,7 +29,7 @@ from setting import G_BETA
 def getAdditionalBlock_G(filters):
     model = Sequential()
     layerSize = int(2048/filters)
-    model.add(UpSampling2D((2, 2), input_shape=(filters, layerSize, layerSize)))
+    model.add(UpSampling2D((2, 2), input_shape=(layerSize, layerSize, filters)))
     model.add(Conv2D(int(filters/2), (3, 3), padding="same"))
     model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
@@ -42,7 +42,7 @@ def getAdditionalBlock_G(filters):
 def getAdditionalBlock_D(filters):
     model = Sequential()
     layerSize = int((2048/filters) * 2)
-    model.add(Conv2D(int(filters/2), (3, 3), padding="same", input_shape=(filters/2, layerSize, layerSize)))
+    model.add(Conv2D(int(filters/2), (3, 3), padding="same", input_shape=(layerSize, layerSize, int(filters/2))))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(int(filters),   (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
@@ -53,6 +53,7 @@ def getAdditionalBlock_D(filters):
 def getInputBlock_D(filters):
     model = Sequential()
     model.add(Conv2D(int(filters), (1, 1), padding="same", input_shape=(128, 128, 3)))
+    model.add(LeakyReLU(0.2))
     return model
 
 # 最初のモデルを生成
@@ -115,16 +116,22 @@ def train():
     for i in range(5+1):
         print(i)
         # G の出力層
-        out_G = Sequential([Conv2D(3, (1, 1), padding="same", input_shape=(4*2**i, int(512/(2**i)), int(512/2**i)))])
+        out_G = Sequential([Conv2D(3, (1, 1), padding="same", input_shape=(int(512/(2**i)), int(512/(2**i)), 4*2**i))])
         # D の入力層
         in_D  = getInputBlock_D(512/(2**(i)))
+        print(type(models_G))
+        print(models_G)
+        print(models_G[:i+1] + [out_G, in_D] + models_D[:i+1][::-1])
+        compiled_D.append(Sequential([in_D] + models_D[:i+1][::-1]))
         compiled_G.append(Sequential(models_G[:i+1] + [out_G, in_D] + models_D[:i+1][::-1]))
+    #     compiled_G.append(Sequential([out_G, in_D] + models_D[:i+1][::-1]))
 
         compiled_G[-1].compile(loss="binary_crossentropy", \
                         optimizer=g_opt, metrics=["accuracy"])
         compiled_G[-1].summary()
 
-        compiled_D.append(Sequential([in_D] + models_D[:i+1][::-1]))
+        print(type([in_D] + models_D[:i+1][::-1]))
+        print([in_D] + models_D[:i+1][::-1])
         compiled_D[-1].compile(loss="binary_crossentropy", \
                         optimizer=d_opt, metrics=["accuracy"])
         compiled_D[-1].summary()
