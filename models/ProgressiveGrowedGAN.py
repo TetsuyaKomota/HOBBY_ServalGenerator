@@ -12,17 +12,24 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.pooling import AveragePooling2D
 from keras.optimizers import Adam
 
+import math
 import numpy as np
 import cv2
+import os
 
 import models.FriendsLoader as FriendsLoader
-from setting import D_LR
-from setting import D_BETA
-from setting import G_LR
-from setting import G_BETA
-from setting import BATCH_SIZE
-# from setting import NOIZE_SIZE
-NOIZE_SIZE = 512
+from p_setting import D_LR
+from p_setting import D_BETA1
+from p_setting import D_BETA2
+from p_setting import G_LR
+from p_setting import G_BETA1
+from p_setting import G_BETA2
+from p_setting import BATCH_SIZE
+from p_setting import NOIZE_SIZE
+SAVE_MODEL_PATH = "tmp/save_models/"
+SAVE_NOIZE_PATH = "tmp/save_noizes/"
+GENERATED_IMAGE_PATH = "tmp/"
+
 
 # G, D それぞれ，次の3層を追加するメソッド
 # G の pixel-wise 正規化の正規化関数
@@ -142,8 +149,8 @@ def train():
     shape = datas.shape
     datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
-    g_opt          = Adam(lr=G_LR, beta_1=G_BETA)
-    d_opt          = Adam(lr=D_LR, beta_1=D_BETA)
+    g_opt = Adam(lr=G_LR, beta_1=G_BETA1, beta_2=G_BETA2)
+    d_opt = Adam(lr=D_LR, beta_1=D_BETA1, beta_2=D_BETA2)
 
     # 各モデルをロード
     # メモリ的に 128*128 を最終目標
@@ -235,14 +242,14 @@ def train():
                 print(t % tuple(tp))
                 logfile.write((t+"\n") % tuple(tp))
 
-            # 生成画像を出力
-            if index % int(num_batches/2) == 0:
-                l = []
-                l.append(generator.predict(n_learn, verbose=0))
-                l.append(generator.predict(n_learn, verbose=0))
-                l.append(generator.predict(n_learn, verbose=0))
-                l.append(generator.predict(n_learn, verbose=0))
-                combine_images(l, epoch, index)
+                # 生成画像を出力
+                if index % int(num_batches/2) == 0:
+                    l = []
+                    l.append(d_images)
+                    l.append(generator.predict(noize, verbose=0))
+                    l.append(generator.predict(noize, verbose=0))
+                    l.append(generator.predict(noize, verbose=0))
+                    combine_images(l, epoch, index)
 
 
         exit()
