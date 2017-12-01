@@ -53,7 +53,7 @@ def getAdditionalBlock_D(idx):
 
 # G の出力層を生成
 def getOutputBlock_G(idx):
-    model = Seqential()
+    model = Sequential()
     filters   = 16 * 2**(5-idx)
     layerSize =  4 * 2**idx
     model.add(Conv2D(3, (1, 1), padding="same", input_shape=(layerSize, layerSize, filters)))
