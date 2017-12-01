@@ -57,6 +57,7 @@ def getOutputBlock_G(idx):
     filters   = 16 * 2**(5-idx)
     layerSize =  4 * 2**idx
     model.add(Conv2D(3, (1, 1), padding="same", input_shape=(layerSize, layerSize, filters)))
+    return model
 
 # D の入力層を生成
 def getInputBlock_D(idx):
