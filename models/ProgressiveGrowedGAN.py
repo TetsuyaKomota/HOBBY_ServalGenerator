@@ -96,6 +96,7 @@ def train():
         models_D.append(getAdditionalBlock_D(512/(2**i)))
 
     # 各段階で入出力層を補ってコンパイル
+    """
     gan = Sequential([models_G[0], models_D[0]])
     gan.compile(loss="binary_crossentropy", \
                         optimizer=g_opt, metrics=["accuracy"])
@@ -103,17 +104,20 @@ def train():
                         optimizer=d_opt, metrics=["accuracy"])
     compiled_G = [gan]
     compiled_D = [models_D[0]]
-    
+    """
+   
+    compiled_G = []
+    compiled_D = []
     for i in range(5+1):
         # G の出力層
         out_G = Conv2D(3, (1, 1), padding="same")
-        compiled_G.append(models_G[:i+1] + out_G + models_D[:i+1][::-1])
+        compiled_G.append(Sequential(models_G[:i+1] + [out_G] + models_D[:i+1][::-1]))
         compiled_G[-1].compile(loss="binary_crossentropy", \
                         optimizer=g_opt, metrics=["accuracy"])
 
         # D の入力層
         in_D  = [getInputBlock_D(512/(2**(i)))]
-        compiled_D.append([in_D, models_D[:i+1][::-1]])
+        compiled_D.append(Sequential([in_D] + models_D[:i+1][::-1]))
         compiled_D[-1].compile(loss="binary_crossentropy", \
                         optimizer=g_opt, metrics=["accuracy"])
 
