@@ -97,6 +97,44 @@ def firstModel_D():
     model.add(Dense(1))
     return model
 
+# 画像を出力する
+# 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
+# 学習画像と出力画像は同じサイズ，枚数を前提
+def combine_images(learn, epoch, batch, path="output/"):
+    total  = learn[0].shape[0]
+    cols   = int(math.sqrt(total))
+    rows   = math.ceil(float(total)/cols)
+    w, h   = learn[0].shape[1:3]
+    size   = (h*rows*2, w*cols*2, 3)
+    output = np.zeros(size, dtype=learn[0].dtype)
+
+    for n in range(len(learn[0])):
+        i = int(n/cols)
+        j = n % cols
+        w0 = w* i
+        w1 = w*(i+1)
+        w2 = w*(cols+i)
+        w3 = w*(cols+i+1)
+        h0 = h* j
+        h1 = h*(j+1)
+        h2 = h*(rows+j)
+        h3 = h*(rows+j+1)
+        for k in range(3):
+            output[w0:w1, h0:h1, k] = learn[0][n][:, :, k]
+            output[w0:w1, h2:h3, k] = learn[1][n][:, :, k]
+            output[w2:w3, h2:h3, k] = learn[2][n][:, :, k]
+            output[w2:w3, h0:h1, k] = learn[3][n][:, :, k]
+
+    output = output*127.5 + 127.5
+    if not os.path.exists(GENERATED_IMAGE_PATH):
+        os.mkdir(GENERATED_IMAGE_PATH)
+    imgPath  = GENERATED_IMAGE_PATH
+    imgPath += path
+    imgPath += "%04d_%04d.png" % (epoch, batch)
+    cv2.imwrite(imgPath, output.astype(np.uint8))
+
+    return output
+
 # 学習
 def train():
     (originals, _), (_, _) = FriendsLoader.load_data()
@@ -196,6 +234,16 @@ def train():
                 tp += d_loss
                 print(t % tuple(tp))
                 logfile.write((t+"\n") % tuple(tp))
+
+            # 生成画像を出力
+            if index % int(num_batches/2) == 0:
+                l = []
+                l.append(generator.predict(n_learn, verbose=0))
+                l.append(generator.predict(n_learn, verbose=0))
+                l.append(generator.predict(n_learn, verbose=0))
+                l.append(generator.predict(n_learn, verbose=0))
+                combine_images(l, epoch, index)
+
 
         exit()
 
