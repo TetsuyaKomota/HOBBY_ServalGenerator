@@ -1,6 +1,7 @@
 # coding = utf-8
 # 2018 年のあれ
 
+from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Dense, Reshape
 from keras.layers.core import Lambda
@@ -66,7 +67,7 @@ def firstModel_G():
 
 def firstModel_D():
     model = Sequential()
-    model.add(Lambda(lambda x:np.concatinate((np.std(x, axis=0), ), x), input_shape=(512, 4, 4)))
+    model.add(Lambda(lambda x:K.concatinate(K.std(x, axis=0, keepims=True), x, axis=0), input_shape=(512, 4, 4)))
     model.add(Conv2D(512, (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (4, 4), padding="same"))
