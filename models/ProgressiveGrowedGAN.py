@@ -110,13 +110,19 @@ def train():
     # 各モデルをロード
     # メモリ的に 128*128 を最終目標
     # つまり 本体 + 5 ブロック (4 * 2**5 = 128)
-    models_G = []
-    models_D = []
+    models_G   = []
+    models_D   = []
+    models_G_O = []
+    models_D_I = []
     models_G.append(firstModel_G())
     models_D.append(firstModel_D())
+    models_G_O.append(getOutputBlock_G(0))
+    models_D_I.append(getInputBlock_D(0))
     for i in range(5):
         models_G.append(getAdditionalBlock_G(i))
         models_D.append(getAdditionalBlock_D(i))
+        models_G_O.append(getOutputBlock_G(i+1))
+        models_D_I.append(getInputBlock_D(i+1))
 
     # 各段階で入出力層を補ってコンパイル
     compiled_G = []
@@ -124,9 +130,9 @@ def train():
     for i in range(5+1):
         print(i)
         # G の出力層
-        out_G = getOutputBlock_G(i)
+        out_G = models_G_O[i]
         # D の入力層
-        in_D  = getInputBlock_D(i)
+        in_D  = models_D_I[i]
 
         compiled_D.append(Sequential([in_D] + models_D[:i+1][::-1]))
         compiled_G.append(Sequential(models_G[:i+1] + [out_G, in_D] + models_D[:i+1][::-1]))
@@ -151,7 +157,7 @@ def train():
     # 小さいモデルから学習する
     for i in range(5+1):
         # 画像生成用の G をコンパイル
-        generator = Sequential(models_G[:i+1])
+        generator = Sequential([models_G[:i+1], models_G_O[i]])
         generator.trainable = False
         generator.compile(loss="binary_crossentropy", optimizer=g_opt)
         # モデルに合わせてリアルデータを縮小する
