@@ -67,7 +67,7 @@ def firstModel_G():
 
 def firstModel_D():
     model = Sequential()
-    model.add(Lambda(lambda x:K.concatinate(K.std(x, axis=0, keepims=True), x, axis=0), input_shape=(512, 4, 4)))
+    model.add(Lambda(lambda x:K.concatenate([K.std(x, axis=0, keepdims=True), x], axis=0), input_shape=(512, 4, 4)))
     model.add(Conv2D(512, (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (4, 4), padding="same"))
