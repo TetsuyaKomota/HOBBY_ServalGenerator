@@ -23,7 +23,7 @@ import models.FriendsLoader as FriendsLoader
 # filters : 入力の filter 数
 def getAdditionalBlock_G(filters):
     model = Sequential()
-    model.add(UpSampling2D((2, 2))
+    model.add(UpSampling2D((2, 2)))
     model.add(Conv2D(filters/2, (3, 3), padding="same"))
     model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
@@ -57,14 +57,16 @@ def firstModel_G():
     model.add(Dense(4*4*512, input_shape=(512, )))
     model.add(Reshape((4, 4, 512)))
     model.add(Conv2D(512, (4, 4), padding="same"))
+    model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (3, 3), padding="same"))
+    model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
     return model
 
 def firstModel_D():
     model = Sequential()
-    model.add(Lambda(lambda x:np.concatenate((np.std(x, 0), ), x)))
+    model.add(Lambda(lambda x:np.concatinate((np.std(x, axis=0), ), x), input_shape=(512, 4, 4)))
     model.add(Conv2D(512, (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (4, 4), padding="same"))

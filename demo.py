@@ -117,6 +117,8 @@ class Encoder:
 def mapping(cornerList, pos, fieldSize):
     # 座標を [0, 1] 正規化する
     normalPos = [pos[0]/fieldSize, pos[1]/fieldSize]
+    normalPos[0] = normalPos[0]*2 - 0.5
+    normalPos[1] = normalPos[1]*2 - 0.5
     print(normalPos)
     # x方向の2辺の内点を取る
     left  = cornerList[0]*normalPos[0] + cornerList[1]*(1-normalPos[0])
