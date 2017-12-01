@@ -157,7 +157,7 @@ def train():
     # 小さいモデルから学習する
     for i in range(5+1):
         # 画像生成用の G をコンパイル
-        generator = Sequential([models_G[:i+1], models_G_O[i]])
+        generator = Sequential(models_G[:i+1] + [models_G_O[i]])
         generator.trainable = False
         generator.compile(loss="binary_crossentropy", optimizer=g_opt)
         # モデルに合わせてリアルデータを縮小する
