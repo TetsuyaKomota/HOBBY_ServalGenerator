@@ -13,12 +13,16 @@ from keras.layers.pooling import AveragePooling2D
 from keras.optimizers import Adam
 
 import numpy as np
+import cv2
 
 import models.FriendsLoader as FriendsLoader
 from setting import D_LR
 from setting import D_BETA
 from setting import G_LR
 from setting import G_BETA
+from setting import BATCH_SIZE
+from setting import NOIZE_SIZE
+
 # G, D それぞれ，次の3層を追加するメソッド
 # G の pixel-wise 正規化の正規化関数
 # train
@@ -94,8 +98,8 @@ def firstModel_D():
 
 # 学習
 def train():
-    (datas, _), (_, _) = FriendsLoader.load_data()
-    datas = (datas.astype(np.float32) - 127.5)/127.5
+    (originals, _), (_, _) = FriendsLoader.load_data()
+    datas = (originals.astype(np.float32) - 127.5)/127.5
     shape = datas.shape
     datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
@@ -128,20 +132,57 @@ def train():
 
         compiled_G[-1].compile(loss="binary_crossentropy", \
                         optimizer=g_opt, metrics=["accuracy"])
-        compiled_G[-1].summary()
 
         compiled_D[-1].compile(loss="binary_crossentropy", \
                         optimizer=d_opt, metrics=["accuracy"])
+
+        # とりあえず表示
+        compiled_G[-1].summary()
         compiled_D[-1].summary()
 
-    # モデルを表示
 
+    num_batches = int(datas.shape[0] / BATCH_SIZE)
+    print('Number of batches:', num_batches)
 
+    # ログを出力する
+    logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
+    
+    # 小さいモデルから学習する
+    for i in range(5+1):
+        # モデルに合わせてリアルデータを縮小する
+        resized = []   
+        for d in originals:
+            resized.append(cv2.resize(d, (4*2**i, 4*2**i), interpolation=cv2.INTER_LINEAR))
+        datas = (resized.astype(np.float32) - 127.5)/127.5
+        shape = datas.shape
+        datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
+        for index in range(num_batches):
+            noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
+            
+            g_images = complied_G[i].predict(noize, verbose=0)
+            d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
+            # D を更新
+            Xd = np.concatenate((d_images, g_images))
+            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+            d_loss = complied_D[i].fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
+            d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
+            # G を更新
+            Xg = noize
+            yg = [1]*BATCH_SIZE
+            g_loss = complied_G[i].fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
+            g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
+            # D の出力の様子を確認
+            t   = "epoch: %d, batch: %d, "
+            t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
+            tp  = [epoch, index]
+            tp += g_loss
+            tp += d_loss
+            print(t % tuple(tp))
+            logfile.write((t+"\n") % tuple(tp))
 
-
-
+        exit()
 
