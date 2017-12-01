@@ -3,7 +3,7 @@
 
 from keras import backend as K
 from keras.models import Sequential
-from keras.layers import Dense, Reshape
+from keras.layers import Dense, Activation, Reshape
 from keras.layers import Flatten
 from keras.layers.core import Lambda
 from keras.layers.convolutional import UpSampling2D
@@ -68,6 +68,7 @@ def getOutputBlock_G(idx):
     filters   = 16 * 2**(5-idx)
     layerSize =  4 * 2**idx
     model.add(Conv2D(3, (1, 1), padding="same", input_shape=(layerSize, layerSize, filters)))
+    model.add(Activation("tanh"))
     return model
 
 # D の入力層を生成
@@ -101,6 +102,7 @@ def firstModel_D():
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     model.add(Dense(1))
+    model.add(Activation("sigmoid"))
     return model
 
 # 画像を出力する
