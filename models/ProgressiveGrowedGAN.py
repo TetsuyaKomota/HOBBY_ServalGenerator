@@ -44,14 +44,13 @@ def getAdditionalBlock_G(idx):
     model = Sequential()
     model.add(UpSampling2D((2, 2), input_shape=(layerSize, layerSize, 2*filters)))
     model.add(Conv2D(filters, (3, 3), padding="same"))
-    model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
+    model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(filters, (3, 3), padding="same"))
-    model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
+    model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
     return model
 
-# filters : 出力の filter 数
 def getAdditionalBlock_D(idx):
     filters   =  8 * 2**(5-idx)
     layerSize =  8 * 2**idx
@@ -86,10 +85,10 @@ def firstModel_G():
     model.add(Dense(4*4*512, input_shape=(512, )))
     model.add(Reshape((4, 4, 512)))
     model.add(Conv2D(512, (4, 4), padding="same"))
-    model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
+    model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (3, 3), padding="same"))
-    model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
+    model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
     return model
 
