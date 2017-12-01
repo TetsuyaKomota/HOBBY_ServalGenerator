@@ -4,6 +4,7 @@
 from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Dense, Reshape
+from keras.layers import Flatten
 from keras.layers.core import Lambda
 from keras.layers.convolutional import UpSampling2D
 from keras.layers import Conv2D
@@ -88,6 +89,7 @@ def firstModel_D():
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (4, 4), padding="same"))
     model.add(LeakyReLU(0.2))
+    model.add(Flatten())
     model.add(Dense(1))
     return model
 
