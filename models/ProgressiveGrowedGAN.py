@@ -43,10 +43,10 @@ def getAdditionalBlock_G(idx):
     layerSize =  4 * 2**idx
     model = Sequential()
     model.add(UpSampling2D((2, 2), input_shape=(layerSize, layerSize, 2*filters)))
-    model.add(Conv2D(filters, (3, 3), padding="same"))
+    model.add(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
     model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(filters, (3, 3), padding="same"))
+    model.add(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
     model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
     return model
@@ -55,9 +55,9 @@ def getAdditionalBlock_D(idx):
     filters   =  8 * 2**(5-idx)
     layerSize =  8 * 2**idx
     model = Sequential()
-    model.add(Conv2D(  filters, (3, 3), padding="same", input_shape=(layerSize, layerSize, filters)))
+    model.add(Conv2D(  filters, (3, 3), padding="same", kernel_initializer="he_normal", input_shape=(layerSize, layerSize, filters)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(2*filters, (3, 3), padding="same"))
+    model.add(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal"))
     model.add(LeakyReLU(0.2))
     model.add(AveragePooling2D((2, 2)))
     return model
@@ -67,7 +67,7 @@ def getOutputBlock_G(idx):
     model = Sequential()
     filters   = 16 * 2**(5-idx)
     layerSize =  4 * 2**idx
-    model.add(Conv2D(3, (1, 1), padding="same", input_shape=(layerSize, layerSize, filters)))
+    model.add(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal", input_shape=(layerSize, layerSize, filters)))
     model.add(Activation("tanh"))
     return model
 
@@ -76,7 +76,7 @@ def getInputBlock_D(idx):
     filters   = 16 * 2**(5-idx)
     layerSize =  4 * 2**idx
     model = Sequential()
-    model.add(Conv2D(filters, (1, 1), padding="same", input_shape=(layerSize, layerSize, 3)))
+    model.add(Conv2D(filters, (1, 1), padding="same", kernel_initializer="he_normal", input_shape=(layerSize, layerSize, 3)))
     model.add(LeakyReLU(0.2))
     return model
 
@@ -85,10 +85,10 @@ def firstModel_G():
     model = Sequential()
     model.add(Dense(4*4*512, input_shape=(512, )))
     model.add(Reshape((4, 4, 512)))
-    model.add(Conv2D(512, (4, 4), padding="same"))
+    model.add(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
     model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(512, (3, 3), padding="same"))
+    model.add(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal"))
     model.add(Lambda(lambda x:K.l2_normalize(x, axis=3)))
     model.add(LeakyReLU(0.2))
     return model
@@ -96,9 +96,9 @@ def firstModel_G():
 def firstModel_D():
     model = Sequential()
     model.add(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3), input_shape=(4, 4, 512)))
-    model.add(Conv2D(512, (3, 3), padding="same"))
+    model.add(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal"))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(512, (4, 4), padding="same"))
+    model.add(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
     model.add(LeakyReLU(0.2))
     model.add(Flatten())
     model.add(Dense(1))
@@ -216,6 +216,16 @@ def train():
         datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
         for epoch in range(60):
+            # running Fade-in
+            if i == 0:
+                # 最初のモデルにはフェードイン必要なし
+                break
+            alpha = 0
+            for epoch in range(60):
+                alpha += 0.016
+
+        for epoch in range(60):
+            # finished Fade-in
             for index in range(num_batches):
                 noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                 
