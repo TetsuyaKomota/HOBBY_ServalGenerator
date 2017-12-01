@@ -88,7 +88,7 @@ def firstModel_G():
 
 def firstModel_D():
     model = Sequential()
-    model.add(Lambda(lambda x:K.concatenate([K.std(x, axis=0, keepdims=True), x], axis=0), input_shape=(4, 4, 512)))
+    model.add(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3), input_shape=(4, 4, 512)))
     model.add(Conv2D(512, (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(512, (4, 4), padding="same"))
@@ -169,32 +169,33 @@ def train():
         shape = datas.shape
         datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
-        for index in range(num_batches):
-            noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
-            
-            g_images = generator.predict(noize, verbose=0)
-            d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
+        for epoch in range(60):
+            for index in range(num_batches):
+                noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
+                
+                g_images = generator.predict(noize, verbose=0)
+                d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
-            # D を更新
-            Xd = np.concatenate((d_images, g_images))
-            yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = compiled_D[i].fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
-            d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
+                # D を更新
+                Xd = np.concatenate((d_images, g_images))
+                yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
+                d_loss = compiled_D[i].fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
+                d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
-            # G を更新
-            Xg = noize
-            yg = [1]*BATCH_SIZE
-            g_loss = compiled_G[i].fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
-            g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
+                # G を更新
+                Xg = noize
+                yg = [1]*BATCH_SIZE
+                g_loss = compiled_G[i].fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
+                g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
-            # D の出力の様子を確認
-            t   = "epoch: %d, batch: %d, "
-            t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
-            tp  = [epoch, index]
-            tp += g_loss
-            tp += d_loss
-            print(t % tuple(tp))
-            logfile.write((t+"\n") % tuple(tp))
+                # D の出力の様子を確認
+                t   = "epoch: %d, batch: %d, "
+                t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
+                tp  = [epoch, index]
+                tp += g_loss
+                tp += d_loss
+                print(t % tuple(tp))
+                logfile.write((t+"\n") % tuple(tp))
 
         exit()
 
