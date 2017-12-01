@@ -24,12 +24,12 @@ import models.FriendsLoader as FriendsLoader
 # filters : 入力の filter 数
 def getAdditionalBlock_G(filters):
     model = Sequential()
-    layerSize = 2048/filters
-    model.add(UpSampling2D((2, 2), imput_shape=(filters, layerSize, layerSize)))
-    model.add(Conv2D(filters/2, (3, 3), padding="same"))
+    layerSize = int(2048/filters)
+    model.add(UpSampling2D((2, 2), input_shape=(filters, layerSize, layerSize)))
+    model.add(Conv2D(int(filters/2), (3, 3), padding="same"))
     model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(filters/2, (3, 3), padding="same"))
+    model.add(Conv2D(int(filters/2), (3, 3), padding="same"))
     model.add(Lambda(lambda x:x/np.sum(x**2+1e-8, axis=0)))
     model.add(LeakyReLU(0.2))
     return model
@@ -37,10 +37,10 @@ def getAdditionalBlock_G(filters):
 # filters : 出力の filter 数
 def getAdditionalBlock_D(filters):
     model = Sequential()
-    layerSize = (2048/filters) * 2
-    model.add(Conv2D(filters/2, (3, 3), padding="same", input_shape=(filters/2, layerSize, layerSize)))
+    layerSize = int((2048/filters) * 2)
+    model.add(Conv2D(int(filters/2), (3, 3), padding="same", input_shape=(filters/2, layerSize, layerSize)))
     model.add(LeakyReLU(0.2))
-    model.add(Conv2D(filters,   (3, 3), padding="same"))
+    model.add(Conv2D(int(filters),   (3, 3), padding="same"))
     model.add(LeakyReLU(0.2))
     model.add(AveragePooling2D((2, 2)))
     return model
@@ -48,10 +48,10 @@ def getAdditionalBlock_D(filters):
 # D の入力層を生成
 def getInputBlock_D(filters):
     model = Sequential()
-    layerSize = 2048/filters
+    layerSize = int(2048/filters)
     model.add(Dense(layerSize*layerSize*filters, input_shape=(128*128*3)))
     model.add(Reshape(layerSize, layerSize, filters))
-    model.add(Conv2D(filters, (1, 1), padding="same"))
+    model.add(Conv2D(int(filters), (1, 1), padding="same"))
     return model
 
 # 最初のモデルを生成
