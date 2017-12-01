@@ -44,7 +44,6 @@ def getAdditionalBlock_D(idx):
     filters   =  8 * 2**(5-idx)
     layerSize =  8 * 2**idx
     model = Sequential()
-    layerSize = int((2048/filters) * 2)
     model.add(Conv2D(  filters, (3, 3), padding="same", input_shape=(layerSize, layerSize, filters)))
     model.add(LeakyReLU(0.2))
     model.add(Conv2D(2*filters, (3, 3), padding="same"))
