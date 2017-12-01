@@ -21,7 +21,8 @@ from setting import D_BETA
 from setting import G_LR
 from setting import G_BETA
 from setting import BATCH_SIZE
-from setting import NOIZE_SIZE
+# from setting import NOIZE_SIZE
+NOIZE_SIZE = 512
 
 # G, D それぞれ，次の3層を追加するメソッド
 # G の pixel-wise 正規化の正規化関数
@@ -149,10 +150,15 @@ def train():
     
     # 小さいモデルから学習する
     for i in range(5+1):
+        # 画像生成用の G をコンパイル
+        generator = Sequential(models_G[:i+1])
+        generator.trainable = False
+        generator.compile(loss="binary_crossentropy", optimizer=g_opt)
         # モデルに合わせてリアルデータを縮小する
         resized = []   
         for d in originals:
             resized.append(cv2.resize(d, (4*2**i, 4*2**i), interpolation=cv2.INTER_LINEAR))
+        resized = np.array(resized)
         datas = (resized.astype(np.float32) - 127.5)/127.5
         shape = datas.shape
         datas = datas.reshape(shape[0], shape[1], shape[2], 3)
@@ -160,19 +166,19 @@ def train():
         for index in range(num_batches):
             noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
             
-            g_images = complied_G[i].predict(noize, verbose=0)
+            g_images = generator.predict(noize, verbose=0)
             d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
 
             # D を更新
             Xd = np.concatenate((d_images, g_images))
             yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-            d_loss = complied_D[i].fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
+            d_loss = compiled_D[i].fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
             d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
             # G を更新
             Xg = noize
             yg = [1]*BATCH_SIZE
-            g_loss = complied_G[i].fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
+            g_loss = compiled_G[i].fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
             g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
             # D の出力の様子を確認
