@@ -25,6 +25,7 @@ from p_setting import D_BETA2
 from p_setting import G_LR
 from p_setting import G_BETA1
 from p_setting import G_BETA2
+from p_setting import NUM_EPOCH
 from p_setting import BATCH_SIZE
 from p_setting import NOIZE_SIZE
 SAVE_MODEL_PATH = "tmp/save_models/"
@@ -205,18 +206,16 @@ def train():
         shape = datas.shape
         datas = datas.reshape(shape[0], shape[1], shape[2], 3)
 
-
-
         if i > 0:
             alpha = 0
-            for epoch in range(60):
-                alpha += 0.016
+            for epoch in range(NUM_EPOCH):
+                alpha += 1.0/NUM_EPOCH
                 # running Fade-in
                 # alpha を調節しながら学習する為，エポックごとにコンパイルする
                 # 学習モデルを構築
                 input_D   = Input((4*2**i, 4*2**i, 3))
                 output_D1 = l.build(l.D_I[i], input_D)
-                output_D1 = l.build(l.D[i], output_D1)
+                output_D1 = l.build(l.D_A[i], output_D1)
                 output_D2 = AveragePooling2D((2, 2))(input_D)
                 output_D2 = l.build(l.D_I[i-1], output_D2)
                 output_D  = Add([(1-alpha)*output_D1, alpha*output_D2])
@@ -261,9 +260,9 @@ def train():
                     g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
                     # D の出力の様子を確認
-                    t   = "epoch: %d, batch: %d, "
+                    t   = "fade-I:%d, epoch: %d, batch: %d, "
                     t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
-                    tp  = [epoch, index]
+                    tp  = [i, epoch, index]
                     tp += g_loss
                     tp += d_loss
                     print(t % tuple(tp))
@@ -302,7 +301,7 @@ def train():
         gan.compile(loss="binary_crossentropy", \
                                     optimizer=g_opt, metrics=["accuracy"])
         
-        for epoch in range(60):
+        for epoch in range(NUM_EPOCH):
             for index in range(num_batches):
                 noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                 
@@ -322,9 +321,9 @@ def train():
                 g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
                 # D の出力の様子を確認
-                t   = "epoch: %d, batch: %d, "
+                t   = "full-I:%d, epoch: %d, batch: %d, "
                 t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
-                tp  = [epoch, index]
+                tp  = [i, epoch, index]
                 tp += g_loss
                 tp += d_loss
                 print(t % tuple(tp))
