@@ -5,9 +5,10 @@ from keras import backend as K
 from keras.models import Model
 from keras.layers import Input, Dense, Activation, Reshape
 from keras.layers import Flatten
+from keras.layers import Conv2D
 from keras.layers.core import Lambda
 from keras.layers.convolutional import UpSampling2D
-from keras.layers import Conv2D
+from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.pooling import AveragePooling2D
 from keras.layers.merge import Add
@@ -65,43 +66,44 @@ class LayerSet:
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
         filters   =  8 * 2**(5-idx)
-        # layerSize =  4 * 2**idx
         output = []
         output.append(UpSampling2D((2, 2)))
         output.append(Conv2D(filters, (3, 3), padding="same"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(filters, (3, 3), padding="same"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         return output
 
     def getAdditionalBlock_D(self, idx):
         filters   =  8 * 2**(5-idx)
-        # layerSize =  8 * 2**idx
         output = []
         output.append(Conv2D(filters, (3, 3), padding="same"))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(2*filters, (3, 3), padding="same"))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(AveragePooling2D((2, 2)))
         return output
 
     # G の出力層を生成
     def getOutputBlock_G(self, idx):
-        # filters   = 16 * 2**(5-idx)
-        # layerSize =  4 * 2**idx
         output = []
         output.append(Conv2D(3, (1, 1), padding="same"))
+        output.append(BatchNormalization())
         output.append(Activation("tanh"))
         return output
 
     # D の入力層を生成
     def getInputBlock_D(self, idx):
         filters   = 16 * 2**(5-idx)
-        # layerSize =  4 * 2**idx
         output = []
         output.append(Conv2D(filters, (1, 1), padding="same"))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         return output
 
@@ -112,9 +114,11 @@ class LayerSet:
         output.append(Reshape((4, 4, 512)))
         output.append(Conv2D(512, (4, 4), padding="same"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(512, (3, 3), padding="same"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         return output
 
@@ -122,11 +126,14 @@ class LayerSet:
         output = []
         output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
         output.append(Conv2D(512, (3, 3), padding="same"))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(512, (4, 4), padding="same"))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Flatten())
         output.append(Dense(1))
+        output.append(BatchNormalization())
         output.append(Activation("sigmoid"))
         return output
 
