@@ -1,6 +1,35 @@
 # coding = utf-8
 # Sequential モデルに限界を感じたので functionalAPI で書き直してみる
 
+from keras import backend as K
+from keras.models import Model
+from keras.layers import Input, Dense, Activation, Reshape
+from keras.layers import Flatten
+from keras.layers.core import Lambda
+from keras.layers.convolutional import UpSampling2D
+from keras.layers import Conv2D
+from keras.layers.advanced_activations import LeakyReLU
+from keras.layers.pooling import AveragePooling2D
+from keras.optimizers import Adam
+
+import math
+import numpy as np
+import cv2
+import os
+
+import models.FriendsLoader as FriendsLoader
+from p_setting import D_LR
+from p_setting import D_BETA1
+from p_setting import D_BETA2
+from p_setting import G_LR
+from p_setting import G_BETA1
+from p_setting import G_BETA2
+from p_setting import BATCH_SIZE
+from p_setting import NOIZE_SIZE
+SAVE_MODEL_PATH = "tmp/save_models/"
+SAVE_NOIZE_PATH = "tmp/save_noizes/"
+GENERATED_IMAGE_PATH = "tmp/"
+
 class LayerSet:
 
     def __init__(self):
