@@ -107,6 +107,7 @@ class LayerSet:
         output = []
         output.append(Dense(4*4*512, kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Reshape((4, 4, 512)))
+        output.append(LeakyReLU(0.2))
         output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
@@ -307,6 +308,7 @@ def train():
         gan.summary()
 
         for epoch in range(NUM_EPOCH * 2):
+            np.random.shuffle(datas)
             if i > 0:
                 # fade レイヤーの重みを更新する
                 weights_size = 16 * 2**(5-(i-1))
