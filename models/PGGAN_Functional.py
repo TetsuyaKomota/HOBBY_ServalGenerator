@@ -239,14 +239,23 @@ def train():
         if i > 0:
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
+            # フェードイン用のレイヤーを用意
+            fade_D1 = Dense((4*2**i, 4*2**i, 3), trainable=False)
+            fade_D2 = Dense((4*2**i, 4*2**i, 3), trainable=False)
+            fade_G1 = Dense((4*2**i, 4*2**i, 3), trainable=False)
+            fade_G2 = Dense((4*2**i, 4*2**i, 3), trainable=False)
+            fade_G3 = Dense((4*2**i, 4*2**i, 3), trainable=False)
+            fade_G4 = Dense((4*2**i, 4*2**i, 3), trainable=False)
             # 学習モデルを構築
             input_D   = Input((4*2**i, 4*2**i, 3))
             output_D1 = AveragePooling2D((2, 2))(input_D)
             output_D1 = l.build(l.D_I[i-1], output_D1)
-            output_D1 = Lambda(lambda x:x*(1-alpha))(output_D1) 
+            # output_D1 = Lambda(lambda x:x*(1-alpha))(output_D1) 
+            output_D1 = fade_D1(output_D1)
             output_D2 = l.build(l.D_I[i], input_D)
             output_D2 = l.build(l.D_A[i-1], output_D2)
-            output_D2 = Lambda(lambda x:x*(alpha))(output_D2) 
+            # output_D2 = Lambda(lambda x:x*(alpha))(output_D2) 
+            output_D2 = fade_D2(output_D2)
             output_D  = Add()([output_D1, output_D2])
             for j in range(i-1):
                 output_D = l.build(l.D_A[i-j-2], output_D)
@@ -258,18 +267,22 @@ def train():
                 output_G = l.build(l.G_A[j], output_G)
             output_G1 = l.build(l.G_O[i-1], output_G)
             output_G1 = UpSampling2D((2, 2))(output_G1)
-            output_G1 = Lambda(lambda x:x*(1-alpha))(output_G1) 
+            # output_G1 = Lambda(lambda x:x*(1-alpha))(output_G1) 
+            output_G1 = fade_G1(output_G1)
             output_G2 = l.build(l.G_A[i-1], output_G)
             output_G2 = l.build(l.G_O[i], output_G2)
-            output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
+            # output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
+            output_G2 = fade_G2(output_G2)
             output_G  = Add()([output_G1, output_G2])
             # output_G  = l.build(l.D_I[i], output_G, trainable=False)
             output_G3 = AveragePooling2D((2, 2))(output_G)
             output_G3 = l.build(l.D_I[i-1], output_G3, trainable=False)
-            output_G3 = Lambda(lambda x:x*(1-alpha))(output_G3) 
+            # output_G3 = Lambda(lambda x:x*(1-alpha))(output_G3) 
+            output_G3 = fade_G3(output_G3)
             output_G4 = l.build(l.D_I[i], output_G, trainable=False)
             output_G4 = l.build(l.D_A[i-1], output_G4, trainable=False)
-            output_G4 = Lambda(lambda x:x*(alpha))(output_G4) 
+            # output_G4 = Lambda(lambda x:x*(alpha))(output_G4) 
+            output_G4 = fade_G4(output_G4)
             output_G  = Add()([output_G3, output_G4])
             for j in range(i-1):
                 output_G = l.build(l.D_A[i-j-2], output_G, trainable=False)
@@ -293,19 +306,22 @@ def train():
             gan.compile(loss="binary_crossentropy", \
                                         optimizer=g_opt, metrics=["accuracy"])
 
+        # コンパイル
+        l.setTrainableD(True)
+        discriminator.compile(loss="binary_crossentropy", \
+                                optimizer=d_opt, metrics=["accuracy"])
+        l.setTrainableD(False)
+        gan.compile(loss="binary_crossentropy", \
+                                optimizer=g_opt, metrics=["accuracy"])
+ 
         # とりあえず表示
         discriminator.summary() 
         gan.summary()
 
         for epoch in range(NUM_EPOCH * 2):
-            # alpha を更新して再コンパイル
-            alpha = min(alpha + 1.0/NUM_EPOCH, 1)
-            l.setTrainableD(True)
-            discriminator.compile(loss="binary_crossentropy", \
-                                    optimizer=d_opt, metrics=["accuracy"])
-            l.setTrainableD(False)
-            gan.compile(loss="binary_crossentropy", \
-                                    optimizer=g_opt, metrics=["accuracy"])
+            # fade レイヤーの重みを更新する
+            alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
+            print(fade_D1.getweights().shape)
             for index in range(num_batches):
                 noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                 
