@@ -17,6 +17,7 @@ import math
 import numpy as np
 import cv2
 import os
+import dill
 
 import models.FriendsLoader as FriendsLoader
 from p_setting import D_LR
@@ -125,6 +126,14 @@ class LayerSet:
             output = l(output)
         return output
 
+    # モデルをセーブする
+    def save(self, idx, epoch):
+        pass
+
+    # モデルをロードする
+    def load(self, idx, epoch):
+        pass
+
 # 画像を出力する
 # 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
 # 学習画像と出力画像は同じサイズ，枚数を前提
@@ -208,50 +217,49 @@ def train():
 
         if i > 0:
             alpha = 0
+            # running Fade-in
+            # alpha を調節しながら学習する為，エポックごとにコンパイルする
+            # 学習モデルを構築
+            input_D   = Input((4*2**i, 4*2**i, 3))
+            output_D1 = AveragePooling2D((2, 2))(input_D)
+            output_D1 = l.build(l.D_I[i-1], output_D1)
+            output_D1 = Lambda(lambda x:x*(1-alpha))(output_D1) 
+            output_D2 = l.build(l.D_I[i], input_D)
+            output_D2 = l.build(l.D_A[i-1], output_D2)
+            output_D2 = Lambda(lambda x:x*(alpha))(output_D2) 
+            output_D  = Add()([output_D1, output_D2])
+            for j in range(i-1):
+                output_D = l.build(l.D_A[i-j-2], output_D)
+            output_D = l.build(l.D, output_D)
+            discriminator = Model(inputs=input_D, outputs=output_D)
+            discriminator.compile(loss="binary_crossentropy", \
+                                        optimizer=d_opt, metrics=["accuracy"])
+            input_G  = Input((512, ))
+            output_G = l.build(l.G, input_G)
+            for j in range(i-1):
+                output_G = l.build(l.G_A[j], output_G)
+            output_G1 = l.build(l.G_O[i-1], output_G)
+            output_G1 = UpSampling2D((2, 2))(output_G1)
+            output_G1 = Lambda(lambda x:x*(1-alpha))(output_G1) 
+            output_G2 = l.build(l.G_A[i-1], output_G)
+            output_G2 = l.build(l.G_O[i], output_G2)
+            output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
+            output_G  = Add()([output_G1, output_G2])
+            # output_G  = l.build(l.D_I[i], output_G, trainable=False)
+            output_G3 = AveragePooling2D((2, 2))(output_G)
+            output_G3 = l.build(l.D_I[i-1], output_G3, trainable=False)
+            output_G3 = Lambda(lambda x:x*(1-alpha))(output_G3) 
+            output_G4 = l.build(l.D_I[i], output_G, trainable=False)
+            output_G4 = l.build(l.D_A[i-1], output_G4, trainable=False)
+            output_G4 = Lambda(lambda x:x*(alpha))(output_G4) 
+            output_G  = Add()([output_G3, output_G4])
+            for j in range(i-1):
+                output_G = l.build(l.D_A[i-j-2], output_G, trainable=False)
+            output_G = l.build(l.D, output_G, trainable=False)
+            gan = Model(inputs=input_G, outputs=output_G)
+            gan.compile(loss="binary_crossentropy", \
+                                        optimizer=g_opt, metrics=["accuracy"])
             for epoch in range(NUM_EPOCH):
-                alpha += 1.0/NUM_EPOCH
-                # running Fade-in
-                # alpha を調節しながら学習する為，エポックごとにコンパイルする
-                # 学習モデルを構築
-                input_D   = Input((4*2**i, 4*2**i, 3))
-                output_D1 = AveragePooling2D((2, 2))(input_D)
-                output_D1 = l.build(l.D_I[i-1], output_D1)
-                output_D1 = Lambda(lambda x:x*(1-alpha))(output_D1) 
-                output_D2 = l.build(l.D_I[i], input_D)
-                output_D2 = l.build(l.D_A[i-1], output_D2)
-                output_D2 = Lambda(lambda x:x*(alpha))(output_D2) 
-                output_D  = Add()([output_D1, output_D2])
-                for j in range(i-1):
-                    output_D = l.build(l.D_A[i-j-2], output_D)
-                output_D = l.build(l.D, output_D)
-                discriminator = Model(inputs=input_D, outputs=output_D)
-                discriminator.compile(loss="binary_crossentropy", \
-                                            optimizer=d_opt, metrics=["accuracy"])
-                input_G  = Input((512, ))
-                output_G = l.build(l.G, input_G)
-                for j in range(i-1):
-                    output_G = l.build(l.G_A[j], output_G)
-                output_G1 = l.build(l.G_O[i-1], output_G)
-                output_G1 = UpSampling2D((2, 2))(output_G1)
-                output_G1 = Lambda(lambda x:x*(1-alpha))(output_G1) 
-                output_G2 = l.build(l.G_A[i-1], output_G)
-                output_G2 = l.build(l.G_O[i], output_G2)
-                output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
-                output_G  = Add()([output_G1, output_G2])
-                # output_G  = l.build(l.D_I[i], output_G, trainable=False)
-                output_G3 = AveragePooling2D((2, 2))(output_G)
-                output_G3 = l.build(l.D_I[i-1], output_G3)
-                output_G3 = Lambda(lambda x:x*(1-alpha))(output_G3) 
-                output_G4 = l.build(l.D_I[i], output_G)
-                output_G4 = l.build(l.D_A[i-1], output_G4)
-                output_G4 = Lambda(lambda x:x*(alpha))(output_G4) 
-                output_G  = Add()([output_G3, output_G4])
-                for j in range(i-1):
-                    output_G = l.build(l.D_A[i-j-2], output_G, trainable=False)
-                output_G = l.build(l.D, output_G, trainable=False)
-                gan = Model(inputs=input_G, outputs=output_G)
-                gan.compile(loss="binary_crossentropy", \
-                                            optimizer=g_opt, metrics=["accuracy"])
                 for index in range(num_batches):
                     noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                     
@@ -287,6 +295,10 @@ def train():
                         imgList.append(generator.predict(noize, verbose=0))
                         imgList.append(generator.predict(noize, verbose=0))
                         combine_images(imgList, i, 0, epoch, index)
+            
+            # エポック終了時に alpha を更新する
+            # 開始時でないのは，最初は alpha = 0 でやりたいため    
+            alpha += 1.0/NUM_EPOCH
 
         # finished Fade-in
         # 学習モデルを構築
