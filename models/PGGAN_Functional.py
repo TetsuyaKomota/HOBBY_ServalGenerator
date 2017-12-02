@@ -218,7 +218,7 @@ def train():
                 output_D1 = l.build(l.D_A[i], output_D1)
                 output_D2 = AveragePooling2D((2, 2))(input_D)
                 output_D2 = l.build(l.D_I[i-1], output_D2)
-                output_D  = Add([(1-alpha)*output_D1, alpha*output_D2])
+                output_D  = Add()([(1-alpha)*output_D1, alpha*output_D2])
                 for j in range(i-1):
                     output_D = l.build(l.D_A[i-j-1], output_D)
                 output_D = l.build(l.D, output_D)
@@ -233,7 +233,7 @@ def train():
                 output_G1 = UpSampling2D((2, 2))(output_G1)
                 output_G2 = l.build(l.G_A[i-1])(output_G)
                 output_G2 = l.build(l.G_O[i])(output_G2)
-                output_G = Add([(1-alpha)*output_G1, alpha*output_G2])
+                output_G = Add()([(1-alpha)*output_G1, alpha*output_G2])
                 output_G = l.build(l.D_I[i], output_G, trainable=False)
                 for j in range(i):
                     output_G = l.build(l.D_A[i-j-1], output_G, trainable=False)
