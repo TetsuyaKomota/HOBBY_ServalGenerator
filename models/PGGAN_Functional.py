@@ -324,18 +324,18 @@ def train():
                 alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
                 ALPHA1 = np.zeros((1, 1, weights_size, weights_size))
                 ALPHA2 = np.zeros((1, 1, weights_size, weights_size))
-                for k in range(ALPHA.shape[2]):
-                    ALPHA1(1, 1, k, k) = (1-alpha)
-                    ALPHA2(1, 1, k, k) = alpha
+                for k in range(ALPHA1.shape[2]):
+                    ALPHA1[0, 0, k, k] = (1-alpha)
+                    ALPHA2[0, 0, k, k] = alpha
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
                 fade_G3.set_weights([ALPHA1, fade_G3.get_weights()[1]])
                 fade_G4.set_weights([ALPHA2, fade_G4.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
                 ALPHA2 = np.zeros((1, 1, 3, 3))
-                for k in range(ALPHA.shape[2]):
-                    ALPHA1(1, 1, k, k) = (1-alpha)
-                    ALPHA2(1, 1, k, k) = alpha
+                for k in range(ALPHA1.shape[2]):
+                    ALPHA1[0, 0, k, k] = (1-alpha)
+                    ALPHA2[0, 0, k, k] = alpha
 
                 fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
                 fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
