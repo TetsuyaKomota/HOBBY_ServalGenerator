@@ -318,7 +318,8 @@ def train():
                 g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
                 # D の出力の様子を確認
-                t   = "fade-I:%d, epoch: %d, batch: %d, "
+                t   = "full" if epoch >= NUM_EPOCH else "fade"
+                t  += "-I:%d, epoch: %d, batch: %d, "
                 t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
                 tp  = [i, epoch, index]
                 tp += g_loss
@@ -327,7 +328,7 @@ def train():
                 logfile.write((t+"\n") % tuple(tp))
 
                 # 生成画像を出力
-                if index % int(num_batches/2) == 0:
+                if index % int(num_batches/2 + 1) == 0:
                     fadefull = int(epoch >= NUM_EPOCH)
                     imgList = []
                     imgList.append(d_images)
