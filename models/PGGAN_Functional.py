@@ -64,7 +64,7 @@ class LayerSet:
         return output
 
     def getAdditionalBlock_D(self, idx):
-        filters   =  8 * 2**(5-idx)
+        filters   = 16 * 2**(5-idx)
         layerSize =  8 * 2**idx
         output = []
         output.append(Conv2D(filters, (3, 3), padding="same"))
