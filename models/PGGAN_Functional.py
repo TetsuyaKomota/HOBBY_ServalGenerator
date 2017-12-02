@@ -260,6 +260,12 @@ def train():
             gan.compile(loss="binary_crossentropy", \
                                         optimizer=g_opt, metrics=["accuracy"])
             for epoch in range(NUM_EPOCH):
+                # alpha を更新して再コンパイル
+                alpha += 1.0/NUM_EPOCH
+                discriminator.compile(loss="binary_crossentropy", \
+                                        optimizer=d_opt, metrics=["accuracy"])
+                gan.compile(loss="binary_crossentropy", \
+                                        optimizer=g_opt, metrics=["accuracy"])
                 for index in range(num_batches):
                     noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                     
@@ -296,9 +302,6 @@ def train():
                         imgList.append(generator.predict(noize, verbose=0))
                         combine_images(imgList, i, 0, epoch, index)
             
-            # エポック終了時に alpha を更新する
-            # 開始時でないのは，最初は alpha = 0 でやりたいため    
-            alpha += 1.0/NUM_EPOCH
 
         # finished Fade-in
         # 学習モデルを構築
