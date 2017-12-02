@@ -13,6 +13,7 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.pooling import AveragePooling2D
 from keras.layers.merge import Add
 from keras.optimizers import Adam
+from keras.constraints import unit_norm
 
 import math
 import numpy as np
@@ -68,10 +69,10 @@ class LayerSet:
         filters   =  8 * 2**(5-idx)
         output = []
         output.append(UpSampling2D((2, 2)))
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
         return output
@@ -79,9 +80,9 @@ class LayerSet:
     def getAdditionalBlock_D(self, idx):
         filters   =  8 * 2**(5-idx)
         output = []
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
         output.append(AveragePooling2D((2, 2)))
         return output
@@ -89,7 +90,7 @@ class LayerSet:
     # G の出力層を生成
     def getOutputBlock_G(self, idx):
         output = []
-        output.append(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Activation("tanh"))
         return output
 
@@ -97,18 +98,18 @@ class LayerSet:
     def getInputBlock_D(self, idx):
         filters   = 16 * 2**(5-idx)
         output = []
-        output.append(Conv2D(filters, (1, 1), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(filters, (1, 1), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
         return output
 
     # 最初のモデルを生成
     def firstModel_G(self):
         output = []
-        output.append(Dense(4*4*512), kernel_initializer="he_normal")
+        output.append(Dense(4*4*512, kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Reshape((4, 4, 512)))
-        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
         return output
@@ -116,9 +117,9 @@ class LayerSet:
     def firstModel_D(self):
         output = []
         output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
-        output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
         output.append(Flatten())
         output.append(Dense(1))
