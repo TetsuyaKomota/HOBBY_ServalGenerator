@@ -318,22 +318,21 @@ def train():
         gan.summary()
 
         for epoch in range(NUM_EPOCH * 2):
-            # fade レイヤーの重みを更新する
-            weights_size = 16 * 2**(5-(i-1))
-            alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
-            ALPHA1 = np.ones((1, 1, weights_size, weights_size)) * (1-alpha)
-            ALPHA2 = np.ones((1, 1, weights_size, weights_size)) * alpha
-            fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
-            fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
-            fade_G3.set_weights([ALPHA1, fade_G3.get_weights()[1]])
-            fade_G4.set_weights([ALPHA2, fade_G4.get_weights()[1]])
-            ALPHA1 = np.ones((1, 1, 3, 3)) * (1-alpha)
-            ALPHA2 = np.ones((1, 1, 3, 3)) * alpha
-            fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
-            fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
+            if i > 0:
+                # fade レイヤーの重みを更新する
+                weights_size = 16 * 2**(5-(i-1))
+                alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
+                ALPHA1 = np.ones((1, 1, weights_size, weights_size)) * (1-alpha)
+                ALPHA2 = np.ones((1, 1, weights_size, weights_size)) * alpha
+                fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
+                fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
+                fade_G3.set_weights([ALPHA1, fade_G3.get_weights()[1]])
+                fade_G4.set_weights([ALPHA2, fade_G4.get_weights()[1]])
+                ALPHA1 = np.ones((1, 1, 3, 3)) * (1-alpha)
+                ALPHA2 = np.ones((1, 1, 3, 3)) * alpha
+                fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
+                fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
 
-            print(fade_D1.getweights().shape)
-            exit()
             for index in range(num_batches):
                 noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                 
