@@ -55,7 +55,7 @@ class LayerSet:
     def setTrainableD(self, isTrainable):
         DList  = []
         DList += self.D
-        for b in self.D_O:
+        for b in self.D_I:
             DList += b
         for b in self.D_A:
             DList += b
