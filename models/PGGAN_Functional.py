@@ -191,7 +191,6 @@ def combine_images(learn, idx, fadefill, epoch, batch, path="output/"):
 
     return output
 
-
 # 学習
 def train():
     (originals, _), (_, _) = FriendsLoader.load_data()
@@ -240,12 +239,12 @@ def train():
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
             # フェードイン用のレイヤーを用意
-            fade_D1 = Conv2D(3, (1, 1), trainable=False)
-            fade_D2 = Conv2D(3, (1, 1), trainable=False)
-            fade_G1 = Conv2D(3, (1, 1), trainable=False)
-            fade_G2 = Conv2D(3, (1, 1), trainable=False)
-            fade_G3 = Conv2D(3, (1, 1), trainable=False)
-            fade_G4 = Conv2D(3, (1, 1), trainable=False)
+            fade_D1 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+            fade_D2 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+            fade_G1 = Conv2D(                3, (1, 1), trainable=False)
+            fade_G2 = Conv2D(                3, (1, 1), trainable=False)
+            fade_G3 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+            fade_G4 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
             # 学習モデルを構築
             input_D   = Input((4*2**i, 4*2**i, 3))
             output_D1 = AveragePooling2D((2, 2))(input_D)
@@ -320,7 +319,19 @@ def train():
 
         for epoch in range(NUM_EPOCH * 2):
             # fade レイヤーの重みを更新する
+            weights_size = 16 * 2**(5-(i-1))
             alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
+            ALPHA1 = np.ones((1, 1, weights_size, weights_size)) * (1-alpha)
+            ALPHA2 = np.ones((1, 1, weights_size, weights_size)) * alpha
+            fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
+            fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
+            fade_G3.set_weights([ALPHA1, fade_G3.get_weights()[1]])
+            fade_G4.set_weights([ALPHA2, fade_G4.get_weights()[1]])
+            ALPHA1 = np.ones((1, 1, 3, 3)) * (1-alpha)
+            ALPHA2 = np.ones((1, 1, 3, 3)) * alpha
+            fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
+            fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
+
             print(fade_D1.getweights().shape)
             exit()
             for index in range(num_batches):
