@@ -128,7 +128,7 @@ class LayerSet:
 # 画像を出力する
 # 学習画像と出力画像を引数に，左右に並べて一枚の画像として出力
 # 学習画像と出力画像は同じサイズ，枚数を前提
-def combine_images(learn, i, epoch, batch, path="output/"):
+def combine_images(learn, idx, epoch, batch, path="output/"):
     total  = learn[0].shape[0]
     cols   = int(math.sqrt(total))
     rows   = math.ceil(float(total)/cols)
@@ -158,7 +158,7 @@ def combine_images(learn, i, epoch, batch, path="output/"):
         os.mkdir(GENERATED_IMAGE_PATH)
     imgPath  = GENERATED_IMAGE_PATH
     imgPath += path
-    imgPath += "%02d_%04d_%04d.png" % (i, epoch, batch)
+    imgPath += "%02d_%04d_%04d.png" % (idx, epoch, batch)
     cv2.imwrite(imgPath, output.astype(np.uint8))
 
     return output
