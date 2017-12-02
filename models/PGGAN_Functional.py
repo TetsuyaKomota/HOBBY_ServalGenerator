@@ -50,6 +50,18 @@ class LayerSet:
         self.G_O.append(self.getOutputBlock_G(5)) 
         self.D_I.append(self.getInputBlock_D(5))
 
+    # D の trainable を変更する
+    # フェードインの際に再コンパイルをする必要があるため
+    def setTrainableD(self, isTrainable):
+        DList  = []
+        DList += self.D
+        for b in self.D_O:
+            DList += b
+        for b in self.D_A:
+            DList += b
+        for l in DList:
+            l.trainable = isTrinable
+
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
         filters   =  8 * 2**(5-idx)
@@ -232,8 +244,6 @@ def train():
                 output_D = l.build(l.D_A[i-j-2], output_D)
             output_D = l.build(l.D, output_D)
             discriminator = Model(inputs=input_D, outputs=output_D)
-            discriminator.compile(loss="binary_crossentropy", \
-                                        optimizer=d_opt, metrics=["accuracy"])
             input_G  = Input((512, ))
             output_G = l.build(l.G, input_G)
             for j in range(i-1):
@@ -257,13 +267,13 @@ def train():
                 output_G = l.build(l.D_A[i-j-2], output_G, trainable=False)
             output_G = l.build(l.D, output_G, trainable=False)
             gan = Model(inputs=input_G, outputs=output_G)
-            gan.compile(loss="binary_crossentropy", \
-                                        optimizer=g_opt, metrics=["accuracy"])
             for epoch in range(NUM_EPOCH):
                 # alpha を更新して再コンパイル
                 alpha += 1.0/NUM_EPOCH
+                l.setTrainableD(True)
                 discriminator.compile(loss="binary_crossentropy", \
                                         optimizer=d_opt, metrics=["accuracy"])
+                l.setTrainableD(False)
                 gan.compile(loss="binary_crossentropy", \
                                         optimizer=g_opt, metrics=["accuracy"])
                 for index in range(num_batches):
