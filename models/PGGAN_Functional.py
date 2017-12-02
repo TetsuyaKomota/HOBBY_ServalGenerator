@@ -233,8 +233,8 @@ def train():
                     output_G = l.build(l.G_A[j], output_G)
                 output_G1 = l.build(l.G_O[i-1], output_G)
                 output_G1 = UpSampling2D((2, 2))(output_G1)
-                output_G2 = l.build(l.G_A[i-1])(output_G)
-                output_G2 = l.build(l.G_O[i])(output_G2)
+                output_G2 = l.build(l.G_A[i-1], output_G)
+                output_G2 = l.build(l.G_O[i], output_G2)
                 output_G = Add()([(1-alpha)*output_G1, alpha*output_G2])
                 output_G = l.build(l.D_I[i], output_G, trainable=False)
                 for j in range(i):
