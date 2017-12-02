@@ -60,7 +60,7 @@ class LayerSet:
         for b in self.D_A:
             DList += b
         for l in DList:
-            l.trainable = isTrinable
+            l.trainable = isTrainable
 
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
