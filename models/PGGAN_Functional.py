@@ -328,12 +328,13 @@ def train():
 
                 # 生成画像を出力
                 if index % int(num_batches/2) == 0:
+                    fadefull = int(epoch >= NUM_EPOCH)
                     imgList = []
                     imgList.append(d_images)
                     imgList.append(generator.predict(noize, verbose=0))
                     imgList.append(generator.predict(noize, verbose=0))
                     imgList.append(generator.predict(noize, verbose=0))
-                    combine_images(imgList, i, 0, epoch, index)
+                    combine_images(imgList, i, fadefull, epoch, index)
         
         """
         # finished Fade-in
