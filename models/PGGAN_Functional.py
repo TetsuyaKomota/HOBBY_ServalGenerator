@@ -322,6 +322,7 @@ def train():
             # fade レイヤーの重みを更新する
             alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
             print(fade_D1.getweights().shape)
+            exit()
             for index in range(num_batches):
                 noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
                 
