@@ -46,13 +46,13 @@ class LayerSet:
             self.D_A.append(self.getAdditionalBlock_D(i))
             self.G_O.append(self.getOutputBlock_G(i)) 
             self.D_I.append(self.getInputBlock_D(i))
-        self.G_O.append(self.getOutputBlock_G(5+1)) 
-        self.D_I.append(self.getInputBlock_D(5+1))
+        self.G_O.append(self.getOutputBlock_G(5)) 
+        self.D_I.append(self.getInputBlock_D(5))
 
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
         filters   =  8 * 2**(5-idx)
-        layerSize =  4 * 2**idx
+        # layerSize =  4 * 2**idx
         output = []
         output.append(UpSampling2D((2, 2)))
         output.append(Conv2D(filters, (3, 3), padding="same"))
@@ -64,8 +64,8 @@ class LayerSet:
         return output
 
     def getAdditionalBlock_D(self, idx):
-        filters   = 16 * 2**(5-idx)
-        layerSize =  8 * 2**idx
+        filters   =  8 * 2**(5-idx)
+        # layerSize =  8 * 2**idx
         output = []
         output.append(Conv2D(filters, (3, 3), padding="same"))
         output.append(LeakyReLU(0.2))
@@ -76,8 +76,8 @@ class LayerSet:
 
     # G の出力層を生成
     def getOutputBlock_G(self, idx):
-        filters   = 16 * 2**(5-idx)
-        layerSize =  4 * 2**idx
+        # filters   = 16 * 2**(5-idx)
+        # layerSize =  4 * 2**idx
         output = []
         output.append(Conv2D(3, (1, 1), padding="same"))
         output.append(Activation("tanh"))
@@ -86,7 +86,7 @@ class LayerSet:
     # D の入力層を生成
     def getInputBlock_D(self, idx):
         filters   = 16 * 2**(5-idx)
-        layerSize =  4 * 2**idx
+        # layerSize =  4 * 2**idx
         output = []
         output.append(Conv2D(filters, (1, 1), padding="same"))
         output.append(LeakyReLU(0.2))
@@ -214,11 +214,11 @@ def train():
                 # alpha を調節しながら学習する為，エポックごとにコンパイルする
                 # 学習モデルを構築
                 input_D   = Input((4*2**i, 4*2**i, 3))
-                output_D1 = l.build(l.D_I[i], input_D)
-                output_D1 = l.build(l.D_A[i], output_D1)
+                output_D1 = AveragePooling2D((2, 2))(input_D)
+                output_D1 = l.build(l.D_I[i-1], output_D1)
                 output_D1 = Lambda(lambda x:x*(1-alpha))(output_D1) 
-                output_D2 = AveragePooling2D((2, 2))(input_D)
-                output_D2 = l.build(l.D_I[i-1], output_D2)
+                output_D2 = l.build(l.D_I[i], input_D)
+                output_D2 = l.build(l.D_A[i-1], output_D2)
                 output_D2 = Lambda(lambda x:x*(alpha))(output_D2) 
                 output_D  = Add()([output_D1, output_D2])
                 for j in range(i-1):
@@ -233,12 +233,21 @@ def train():
                     output_G = l.build(l.G_A[j], output_G)
                 output_G1 = l.build(l.G_O[i-1], output_G)
                 output_G1 = UpSampling2D((2, 2))(output_G1)
+                output_G1 = Lambda(lambda x:x*(1-alpha))(output_G1) 
                 output_G2 = l.build(l.G_A[i-1], output_G)
                 output_G2 = l.build(l.G_O[i], output_G2)
-                output_G = Add()([(1-alpha)*output_G1, alpha*output_G2])
-                output_G = l.build(l.D_I[i], output_G, trainable=False)
-                for j in range(i):
-                    output_G = l.build(l.D_A[i-j-1], output_G, trainable=False)
+                output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
+                output_G  = Add()([(1-alpha)*output_G1, alpha*output_G2])
+                # output_G  = l.build(l.D_I[i], output_G, trainable=False)
+                output_G3 = AveragePooling2D((2, 2))(output_G)
+                output_G3 = l.build(l.D_I[i-1], output_G3)
+                output_G3 = Lambda(lambda x:x*(1-alpha))(output_G3) 
+                output_G4 = l.build(l.D_I[i], output_G)
+                output_G4 = l.build(l.D_A[i-1], output_G4)
+                output_G4 = Lambda(lambda x:x*(alpha))(output_G4) 
+                output_G  = Add()([output_G3, output_G4])
+                for j in range(i-1):
+                    output_G = l.build(l.D_A[i-j-2], output_G, trainable=False)
                 output_G = l.build(l.D, output_G, trainable=False)
                 gan = Model(inputs=input_G, outputs=output_G)
                 gan.compile(loss="binary_crossentropy", \
