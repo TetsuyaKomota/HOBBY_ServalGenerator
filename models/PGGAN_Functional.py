@@ -51,62 +51,75 @@ class LayerSet:
     def getAdditionalBlock_G(self, idx):
         filters   =  8 * 2**(5-idx)
         layerSize =  4 * 2**idx
-        output = UpSampling2D((2, 2))
-        output = Conv2D(filters, (3, 3), padding="same")(output)
-        output = Lambda(lambda x:K.l2_normalize(x, axis=3))(output)
-        output = LeakyReLU(0.2)(output)
-        output = Conv2D(filters, (3, 3), padding="same")(output)
-        output = Lambda(lambda x:K.l2_normalize(x, axis=3))(output)
-        output = LeakyReLU(0.2)(output)
+        output = []
+        output.append(UpSampling2D((2, 2)))
+        output.append(Conv2D(filters, (3, 3), padding="same"))
+        output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(LeakyReLU(0.2))
+        output.append(Conv2D(filters, (3, 3), padding="same"))
+        output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(LeakyReLU(0.2))
         return output
 
     def getAdditionalBlock_D(self, idx):
         filters   =  8 * 2**(5-idx)
         layerSize =  8 * 2**idx
-        output = Conv2D(filters, (3, 3), padding="same")
-        output = LeakyReLU(0.2)(output)
-        output = Conv2D(2*filters, (3, 3), padding="same")(output)
-        output = LeakyReLU(0.2)(output)
-        output = AveragePooling2D((2, 2))(output)
+        output = []
+        output.append(Conv2D(filters, (3, 3), padding="same"))
+        output.append(LeakyReLU(0.2))
+        output.append(Conv2D(2*filters, (3, 3), padding="same"))
+        output.append(LeakyReLU(0.2))
+        output.append(AveragePooling2D((2, 2)))
         return output
 
     # G の出力層を生成
     def getOutputBlock_G(self, idx):
         filters   = 16 * 2**(5-idx)
         layerSize =  4 * 2**idx
-        output = Conv2D(3, (1, 1), padding="same")
-        output = Activation("tanh")(output)
+        output = []
+        output.append(Conv2D(3, (1, 1), padding="same"))
+        output.append(Activation("tanh"))
         return output
 
     # D の入力層を生成
     def getInputBlock_D(self, idx):
         filters   = 16 * 2**(5-idx)
         layerSize =  4 * 2**idx
-        output = Conv2D(filters, (1, 1), padding="same")
-        output = LeakyReLU(0.2)(output)
+        output = []
+        output.append(Conv2D(filters, (1, 1), padding="same"))
+        output.append(LeakyReLU(0.2))
         return output
 
     # 最初のモデルを生成
     def firstModel_G(self):
-        output = Dense(4*4*512)
-        output = Reshape((4, 4, 512))(output)
-        output = Conv2D(512, (4, 4), padding="same")(output)
-        output = Lambda(lambda x:K.l2_normalize(x, axis=3))(output)
-        output = LeakyReLU(0.2)(output)
-        output = Conv2D(512, (3, 3), padding="same")(output)
-        output = Lambda(lambda x:K.l2_normalize(x, axis=3))(output)
-        output = LeakyReLU(0.2)(output)
+        output = []
+        output.append(Dense(4*4*512))
+        output.append(Reshape((4, 4, 512)))
+        output.append(Conv2D(512, (4, 4), padding="same"))
+        output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(LeakyReLU(0.2))
+        output.append(Conv2D(512, (3, 3), padding="same"))
+        output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
+        output.append(LeakyReLU(0.2))
         return output
 
     def firstModel_D():
-        output = Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3))
-        output = Conv2D(512, (3, 3), padding="same")(output)
-        output = LeakyReLU(0.2)(output)
-        output = Conv2D(512, (4, 4), padding="same")(output)
-        output = LeakyReLU(0.2)(output)
-        output = Flatten()(output)
-        output = Dense(1)(output)
-        output = Activation("sigmoid")(output)
+        output = []
+        output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
+        output.append(Conv2D(512, (3, 3), padding="same"))
+        output.append(LeakyReLU(0.2))
+        output.append(Conv2D(512, (4, 4), padding="same"))
+        output.append(LeakyReLU(0.2))
+        output.append(Flatten())
+        output.append(Dense(1))
+        output.append(Activation("sigmoid"))
+        return output
+
+    # レイヤーの配列を組み立てる
+    def build(self, layerList, inputs, trainable=True):
+        output = inputs
+        for l in layerList:
+            output = l(output, trainable=trainable)
         return output
 
 # 学習
@@ -123,7 +136,7 @@ def train():
     # メモリ的に 128*128 を最終目標
     # つまり 本体 + 5 ブロック (4 * 2**5 = 128)
     # モデルのコンパイルは必要に応じて適宜行う
-    layerSet = LayerSet()
+    l = LayerSet()
 
     num_batches = int(datas.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
@@ -135,10 +148,10 @@ def train():
     for i in range(5+1):
         # 画像生成用の G をコンパイル
         input_G  = Input((512, ))
-        output_G = layerSet.G(input_G)
+        output_G = l.build(l.G, input_G)
         for j in range(i):
-            output_G = layerSet.G_A[j](output_G)
-        output_G = layerSet.G_O[i](output_G)
+            output_G = l.build(l.G_A[j], output_G)
+        output_G = l.build(l.G_O[i], output_G)
         generator = Model(inputs=input_G, outputs=output_G)
         generator.trainable = False
         generator.compile(loss="binary_crossentropy", optimizer=g_opt)
@@ -162,23 +175,23 @@ def train():
 
         # 学習モデルを構築
         input_D  = Input((4*2**i, 4*2**i, 3))
-        output_D = layerSet.D_I[i](input_D)
+        output_D = l.build(l.D_I[i], input_D)
         for j in range(i):
-            output_D = layerSet.D_A[i-j-1](output_D)
-        output_D = layerSet.D(output_D)
+            output_D = l.build(l.D_A[i-j-1], output_D)
+        output_D = l.build(l.D, output_D)
         discriminator = Model(inputs=input_D, outputs=output_D)
         discriminator.compile(loss="binary_crossentropy", \
                                     optimizer=d_opt, metrics=["accuracy"])
 
         input_G  = Input((512, ))
-        output_G = layerSet.G(input_G)
+        output_G = l.build(l.G, input_G)
         for j in range(i):
-            output_G = layerSet.G_A[j](output_G)
-        output_G = layerSet.G_O[i](output_G)
-        output_G = layerSet.D_I[i](output_G, trainable=False)
+            output_G = l.build(l.G_A[j], output_G)
+        output_G = l.build(l.G_O[i], output_G)
+        output_G = l.build(l.D_I[i], output_G, trainable=False)
         for j in range(i):
-            output_G = layerSet.D_A[i-j-1](output_G, trainable=False)
-        output_G = layerSet.D(output_G, trainable=False)
+            output_G = l.build(l.D_A[i-j-1], output_G, trainable=False)
+        output_G = l.build(l.D, output_G, trainable=False)
         gan = Model(inputs=input_G, outputs=output_G)
         gan.compile(loss="binary_crossentropy", \
                                     optimizer=g_opt, metrics=["accuracy"])
