@@ -237,7 +237,7 @@ def train():
                 output_G2 = l.build(l.G_A[i-1], output_G)
                 output_G2 = l.build(l.G_O[i], output_G2)
                 output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
-                output_G  = Add()([(1-alpha)*output_G1, alpha*output_G2])
+                output_G  = Add()([output_G1, output_G2])
                 # output_G  = l.build(l.D_I[i], output_G, trainable=False)
                 output_G3 = AveragePooling2D((2, 2))(output_G)
                 output_G3 = l.build(l.D_I[i-1], output_G3)
