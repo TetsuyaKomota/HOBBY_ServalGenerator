@@ -235,16 +235,16 @@ def train():
         # フェードを初期化する
         alpha = 0
         
+        # フェードイン用のレイヤーを用意
+        fade_D1 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_D2 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_G1 = Conv2D(                3, (1, 1), trainable=False)
+        fade_G2 = Conv2D(                3, (1, 1), trainable=False)
+        fade_G3 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_G4 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
         if i > 0:
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
-            # フェードイン用のレイヤーを用意
-            fade_D1 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
-            fade_D2 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
-            fade_G1 = Conv2D(                3, (1, 1), trainable=False)
-            fade_G2 = Conv2D(                3, (1, 1), trainable=False)
-            fade_G3 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
-            fade_G4 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
             # 学習モデルを構築
             input_D   = Input((4*2**i, 4*2**i, 3))
             output_D1 = AveragePooling2D((2, 2))(input_D)
