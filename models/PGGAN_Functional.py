@@ -235,6 +235,7 @@ def train():
             # 学習モデルを構築
             l.setTrainableD(True)
             input_D   = Input((4*2**i, 4*2**i, 3))
+            """
             output_D1 = AveragePooling2D((2, 2))(input_D)
             output_D1 = l.build(l.D_I[i-1], output_D1)
             output_D1 = fade_D1(output_D1)
@@ -242,6 +243,10 @@ def train():
             output_D2 = l.build(l.D_A[i-1], output_D2)
             output_D2 = fade_D2(output_D2)
             output_D  = Add()([output_D1, output_D2])
+            """
+            output_D = AveragePooling2D((2, 2))(input_D)
+            output_D = l.build(l.D_I[i-1], output_D)
+
             for j in range(i-1):
                 output_D = l.build(l.D_A[i-j-2], output_D)
             output_D = l.build(l.D, output_D)
@@ -254,6 +259,7 @@ def train():
             output_G = l.build(l.G, input_G)
             for j in range(i-1):
                 output_G = l.build(l.G_A[j], output_G)
+            """
             output_G1 = l.build(l.G_O[i-1], output_G)
             output_G1 = UpSampling2D((2, 2))(output_G1)
             output_G1 = fade_G1(output_G1)
@@ -261,6 +267,11 @@ def train():
             output_G2 = l.build(l.G_O[i], output_G2)
             output_G2 = fade_G2(output_G2)
             output_G  = Add()([output_G1, output_G2])
+            """
+            output_G = l.build(l.G_O[i-1], output_G)
+            output_G = UpSampling2D((2, 2))(output_G)
+            
+            """
             output_G3 = AveragePooling2D((2, 2))(output_G)
             output_G3 = l.build(l.D_I[i-1], output_G3)
             output_G3 = fade_G3(output_G3)
@@ -268,6 +279,11 @@ def train():
             output_G4 = l.build(l.D_A[i-1], output_G4)
             output_G4 = fade_G4(output_G4)
             output_G  = Add()([output_G3, output_G4])
+            """
+
+            output_G = AveragePooling2D((2, 2))(output_G)
+            output_G = l.build(l.D_I[i-1], output_G)
+            
             for j in range(i-1):
                 output_G = l.build(l.D_A[i-j-2], output_G)
             output_G = l.build(l.D, output_G)
