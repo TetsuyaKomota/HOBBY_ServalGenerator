@@ -183,9 +183,9 @@ def combine_images(learn, idx, fadefill, epoch, batch, path="output/"):
 # 学習
 def train():
     (originals, _), (_, _) = FriendsLoader.load_data()
-    datas = (originals.astype(np.float32) - 127.5)/127.5
-    shape = datas.shape
-    datas = datas.reshape(shape[0], shape[1], shape[2], 3)
+    originals = (originals.astype(np.float32) - 127.5)/127.5
+    shape = originals.shape
+    originals = originals.reshape(shape[0], shape[1], shape[2], 3)
 
     g_opt = Adam(lr=G_LR, beta_1=G_BETA1, beta_2=G_BETA2)
     d_opt = Adam(lr=D_LR, beta_1=D_BETA1, beta_2=D_BETA2)
@@ -196,7 +196,7 @@ def train():
     # モデルのコンパイルは必要に応じて適宜行う
     l = LayerSet()
 
-    num_batches = int(datas.shape[0] / BATCH_SIZE)
+    num_batches = int(originals.shape[0] / BATCH_SIZE)
     print('Number of batches:', num_batches)
 
     # ログを出力する
