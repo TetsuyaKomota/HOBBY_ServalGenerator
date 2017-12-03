@@ -91,7 +91,8 @@ class LayerSet:
     def getOutputBlock_G(self, idx):
         output = []
         output.append(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal"))
-        output.append(Activation("tanh"))
+        # output.append(Activation("tanh"))
+        output.append(Activation("linear"))
         return output
 
     # D の入力層を生成
@@ -124,7 +125,8 @@ class LayerSet:
         output.append(LeakyReLU(0.2))
         output.append(Flatten())
         output.append(Dense(1))
-        output.append(Activation("sigmoid"))
+        # output.append(Activation("sigmoid"))
+        output.append(Activation("linear"))
         return output
 
     # レイヤーの配列を組み立てる
@@ -183,9 +185,6 @@ def combine_images(learn, idx, fadefill, epoch, batch, path="output/"):
 # 学習
 def train():
     (originals, _), (_, _) = FriendsLoader.load_data()
-    originals = (originals.astype(np.float32) - 127.5)/127.5
-    shape = originals.shape
-    originals = originals.reshape(shape[0], shape[1], shape[2], 3)
 
     g_opt = Adam(lr=G_LR, beta_1=G_BETA1, beta_2=G_BETA2)
     d_opt = Adam(lr=D_LR, beta_1=D_BETA1, beta_2=D_BETA2)
@@ -333,7 +332,7 @@ def train():
                 # D を更新
                 Xd = np.concatenate((d_images, g_images))
                 yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=10, batch_size=BATCH_SIZE, verbose=0)
+                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
                 d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
                 # G を更新
