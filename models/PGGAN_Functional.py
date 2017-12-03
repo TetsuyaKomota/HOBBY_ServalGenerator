@@ -128,10 +128,9 @@ class LayerSet:
         return output
 
     # レイヤーの配列を組み立てる
-    def build(self, layerList, inputs, trainable=True):
+    def build(self, layerList, inputs):
         output = inputs
         for l in layerList:
-            l.trainable = trainable
             output = l(output)
         return output
 
