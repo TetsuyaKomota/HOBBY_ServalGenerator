@@ -4,7 +4,7 @@
 from keras import backend as K
 from keras.models import Model
 from keras.layers import Input, Dense, Activation, Reshape
-from keras.layers import Flatten
+from keras.layers import Flatten, Dropout
 from keras.layers import Conv2D
 from keras.layers.core import Lambda
 from keras.layers.convolutional import UpSampling2D
@@ -123,6 +123,8 @@ class LayerSet:
         output.append(Conv2D(128, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         output.append(Flatten())
+        output.append(Dropout(0.5))
+        output.append(LeakyReLU(0.2))
         output.append(Dense(1))
         output.append(Activation("sigmoid"))
         return output
@@ -193,15 +195,14 @@ def train():
     # モデルのコンパイルは必要に応じて適宜行う
     l = LayerSet()
 
-    num_batches = int(originals.shape[0] / BATCH_SIZE)
-    print('Number of batches:', num_batches)
-
     # ログを出力する
     logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
     
     # 小さいモデルから学習する
     for i in range(5+1):
-        BATCH_SIZE = int(MAX_BATCH_SIZE / 2**i)
+        BATCH_SIZE = int(MAX_BATCH_SIZE / 4**i)
+        num_batches = int(originals.shape[0] / BATCH_SIZE)
+        print('Number of batches:', num_batches)
         # 画像生成用の G をコンパイル
         input_G  = Input((128, ))
         output_G = l.build(l.G, input_G)
@@ -225,8 +226,8 @@ def train():
         # フェードイン用のレイヤーを用意
         fade_D1 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
         fade_D2 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
-        fade_G1 = Conv2D(                3, (1, 1), trainable=False)
-        fade_G2 = Conv2D(                3, (1, 1), trainable=False)
+        fade_G1 = Conv2D(               3, (1, 1), trainable=False)
+        fade_G2 = Conv2D(               3, (1, 1), trainable=False)
         fade_G3 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
         fade_G4 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
         if i > 0:
