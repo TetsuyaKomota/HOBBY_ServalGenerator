@@ -2,6 +2,7 @@
 # Sequential モデルに限界を感じたので functionalAPI で書き直してみる
 
 from keras import backend as K
+from keras.models import Sequential
 from keras.models import Model
 from keras.layers import Input, Dense, Activation, Reshape
 from keras.layers import Flatten, Dropout
@@ -203,14 +204,6 @@ def train():
         BATCH_SIZE = int(MAX_BATCH_SIZE / 4**i)
         num_batches = int(originals.shape[0] / BATCH_SIZE)
         print('Number of batches:', num_batches)
-        # 画像生成用の G をコンパイル
-        input_G  = Input((128, ))
-        output_G = l.build(l.G, input_G)
-        for j in range(i):
-            output_G = l.build(l.G_A[j], output_G)
-        output_G = l.build(l.G_O[i], output_G)
-        generator = Model(inputs=input_G, outputs=output_G)
-        generator.compile(loss="binary_crossentropy", optimizer=g_opt)
         # モデルに合わせてリアルデータを縮小する
         resized = []   
         for d in originals:
@@ -228,15 +221,27 @@ def train():
         fade_D2 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
         fade_G1 = Conv2D(               3, (1, 1), trainable=False)
         fade_G2 = Conv2D(               3, (1, 1), trainable=False)
-        fade_G3 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
-        fade_G4 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
-        if False and i > 0:
+        if i > 0:
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
+            # 画像生成用の G をコンパイル
+            input_G  = Input((128, ))
+            output_G = l.build(l.G, input_G)
+            for j in range(i-1):
+                output_G = l.build(l.G_A[j], output_G)
+            output_G1 = l.build(l.G_O[i-1], output_G)
+            output_G1 = UpSampling2D((2, 2))(output_G1)
+            output_G1 = fade_G1(output_G1)
+            output_G2 = l.build(l.G_A[i-1], output_G)
+            output_G2 = l.build(l.G_O[i], output_G2)
+            output_G2 = fade_G2(output_G2)
+            output_G  = Add()([output_G1, output_G2])
+            generator = Model(inputs=input_G, outputs=output_G)
+            generator.compile(loss="binary_crossentropy", optimizer=g_opt)
+            
             # 学習モデルを構築
             l.setTrainableD(True)
             input_D   = Input((4*2**i, 4*2**i, 3))
-            """
             output_D1 = AveragePooling2D((2, 2))(input_D)
             output_D1 = l.build(l.D_I[i-1], output_D1)
             output_D1 = fade_D1(output_D1)
@@ -244,10 +249,6 @@ def train():
             output_D2 = l.build(l.D_A[i-1], output_D2)
             output_D2 = fade_D2(output_D2)
             output_D  = Add()([output_D1, output_D2])
-            """
-            output_D = AveragePooling2D((2, 2))(input_D)
-            output_D = l.build(l.D_I[i-1], output_D)
-
             for j in range(i-1):
                 output_D = l.build(l.D_A[i-j-2], output_D)
             output_D = l.build(l.D, output_D)
@@ -256,43 +257,18 @@ def train():
                                 optimizer=d_opt, metrics=["accuracy"])
             
             l.setTrainableD(False)
-            input_G  = Input((128, ))
-            output_G = l.build(l.G, input_G)
-            for j in range(i-1):
-                output_G = l.build(l.G_A[j], output_G)
-            """
-            output_G1 = l.build(l.G_O[i-1], output_G)
-            output_G1 = UpSampling2D((2, 2))(output_G1)
-            output_G1 = fade_G1(output_G1)
-            output_G2 = l.build(l.G_A[i-1], output_G)
-            output_G2 = l.build(l.G_O[i], output_G2)
-            output_G2 = fade_G2(output_G2)
-            output_G  = Add()([output_G1, output_G2])
-            """
-            output_G = l.build(l.G_O[i-1], output_G)
-            output_G = UpSampling2D((2, 2))(output_G)
-            
-            """
-            output_G3 = AveragePooling2D((2, 2))(output_G)
-            output_G3 = l.build(l.D_I[i-1], output_G3)
-            output_G3 = fade_G3(output_G3)
-            output_G4 = l.build(l.D_I[i], output_G)
-            output_G4 = l.build(l.D_A[i-1], output_G4)
-            output_G4 = fade_G4(output_G4)
-            output_G  = Add()([output_G3, output_G4])
-            """
-
-            output_G = AveragePooling2D((2, 2))(output_G)
-            output_G = l.build(l.D_I[i-1], output_G)
-            
-            for j in range(i-1):
-                output_G = l.build(l.D_A[i-j-2], output_G)
-            output_G = l.build(l.D, output_G)
-            gan = Model(inputs=input_G, outputs=output_G)
+            gan = Sequential([generator, discriminator])
             gan.compile(loss="binary_crossentropy", \
                                 optimizer=g_opt, metrics=["accuracy"])
         else:
             # 最初の学習モデルを構築
+            # 画像生成用の G をコンパイル
+            input_G  = Input((128, ))
+            output_G = l.build(l.G, input_G)
+            output_G = l.build(l.G_O[0], output_G)
+            generator = Model(inputs=input_G, outputs=output_G)
+            generator.compile(loss="binary_crossentropy", optimizer=g_opt)
+ 
             l.setTrainableD(True)
             input_D  = Input((4, 4, 3))
             output_D = l.build(l.D_I[0], input_D)
@@ -302,12 +278,7 @@ def train():
                                 optimizer=d_opt, metrics=["accuracy"])
 
             l.setTrainableD(False)
-            input_G  = Input((128, ))
-            output_G = l.build(l.G, input_G)
-            output_G = l.build(l.G_O[0], output_G)
-            output_G = l.build(l.D_I[0], output_G)
-            output_G = l.build(l.D, output_G)
-            gan = Model(inputs=input_G, outputs=output_G)
+            gan = Sequential([generator, discriminator])
             gan.compile(loss="binary_crossentropy", \
                                 optimizer=g_opt, metrics=["accuracy"])
 
@@ -328,8 +299,6 @@ def train():
                     ALPHA2[0, 0, k, k] = alpha
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
-                fade_G3.set_weights([ALPHA1, fade_G3.get_weights()[1]])
-                fade_G4.set_weights([ALPHA2, fade_G4.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
                 ALPHA2 = np.zeros((1, 1, 3, 3))
                 for k in range(ALPHA1.shape[2]):
