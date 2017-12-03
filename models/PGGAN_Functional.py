@@ -269,8 +269,8 @@ def train():
             output_G2 = fade_G2(output_G2)
             output_G  = Add()([output_G1, output_G2])
             """
+            output_G = l.build(l.G_O[i-1], output_G)
             output_G = UpSampling2D((2, 2))(output_G)
-            output_G = l.build(l.G_O[i], output_G)
             
             """
             output_G3 = AveragePooling2D((2, 2))(output_G)
@@ -294,7 +294,8 @@ def train():
         else:
             # 最初の学習モデルを構築
             l.setTrainableD(True)
-            input_D  = Input((4, 4, 3))
+            input_D  = Input((8, 8, 3))
+            output_D = AveragePooling2D((2, 2))(input_D)
             output_D = l.build(l.D_I[0], input_D)
             output_D = l.build(l.D, output_D)
             discriminator = Model(inputs=input_D, outputs=output_D)
@@ -305,6 +306,8 @@ def train():
             input_G  = Input((128, ))
             output_G = l.build(l.G, input_G)
             output_G = l.build(l.G_O[0], output_G)
+            output_G = UpSampling2D((2, 2))(output_G)
+            output_G = AveragePooling2D((2, 2))(output_G)
             output_G = l.build(l.D_I[0], output_G)
             output_G = l.build(l.D, output_G)
             gan = Model(inputs=input_G, outputs=output_G)
@@ -317,7 +320,7 @@ def train():
 
         for epoch in range(NUM_EPOCH * 2):
             np.random.shuffle(datas)
-            if len(fade_D1.get_weights().shape) > 0 and i > 0:
+            if len(fade_D1.get_weights()) > 0 and i > 0:
                 # fade レイヤーの重みを更新する
                 weights_size = 4 * 2**(5-(i-1))
                 alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
