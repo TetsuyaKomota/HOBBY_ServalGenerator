@@ -286,6 +286,8 @@ def train():
         discriminator.summary() 
         gan.summary()
 
+        LOCAL_EPOCH = 10
+
         for epoch in range(NUM_EPOCH * 2):
             np.random.shuffle(datas)
             if len(fade_D1.get_weights()) > 0 and i > 0:
@@ -317,13 +319,13 @@ def train():
                 # D を更新
                 Xd = np.concatenate((d_images, g_images))
                 yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
+                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=LOCAL_EPOCH, batch_size=BATCH_SIZE, verbose=0)
                 d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
                 # G を更新
                 Xg = noize
                 yg = [1]*BATCH_SIZE
-                g_loss = gan.fit(Xg, yg, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
+                g_loss = gan.fit(Xg, yg, shuffle=False, epochs=LOCAL_EPOCH, batch_size=BATCH_SIZE, verbose=0)
                 g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
                 # D の出力の様子を確認
