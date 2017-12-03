@@ -90,7 +90,7 @@ class LayerSet:
     # G の出力層を生成
     def getOutputBlock_G(self, idx):
         output = []
-        output.append(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal"))
         output.append(Activation("tanh"))
         return output
 
@@ -98,7 +98,7 @@ class LayerSet:
     def getInputBlock_D(self, idx):
         filters   = 16 * 2**(5-idx)
         output = []
-        output.append(Conv2D(filters, (1, 1), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(filters, (1, 1), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         return output
 
@@ -108,7 +108,7 @@ class LayerSet:
         output.append(Dense(4*4*512, kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Reshape((4, 4, 512)))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
@@ -120,7 +120,7 @@ class LayerSet:
         output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
         output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         output.append(Flatten())
         output.append(Dense(1))
@@ -236,56 +236,58 @@ def train():
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
             # 学習モデルを構築
+            l.setTrainableD(True)
             input_D   = Input((4*2**i, 4*2**i, 3))
             output_D1 = AveragePooling2D((2, 2))(input_D)
             output_D1 = l.build(l.D_I[i-1], output_D1)
-            # output_D1 = Lambda(lambda x:x*(1-alpha))(output_D1) 
             output_D1 = fade_D1(output_D1)
             output_D2 = l.build(l.D_I[i], input_D)
             output_D2 = l.build(l.D_A[i-1], output_D2)
-            # output_D2 = Lambda(lambda x:x*(alpha))(output_D2) 
             output_D2 = fade_D2(output_D2)
             output_D  = Add()([output_D1, output_D2])
             for j in range(i-1):
                 output_D = l.build(l.D_A[i-j-2], output_D)
             output_D = l.build(l.D, output_D)
             discriminator = Model(inputs=input_D, outputs=output_D)
+            discriminator.compile(loss="binary_crossentropy", \
+                                optimizer=d_opt, metrics=["accuracy"])
+            
+            l.setTrainableD(False)
             input_G  = Input((512, ))
             output_G = l.build(l.G, input_G)
             for j in range(i-1):
                 output_G = l.build(l.G_A[j], output_G)
             output_G1 = l.build(l.G_O[i-1], output_G)
             output_G1 = UpSampling2D((2, 2))(output_G1)
-            # output_G1 = Lambda(lambda x:x*(1-alpha))(output_G1) 
             output_G1 = fade_G1(output_G1)
             output_G2 = l.build(l.G_A[i-1], output_G)
             output_G2 = l.build(l.G_O[i], output_G2)
-            # output_G2 = Lambda(lambda x:x*(alpha))(output_G2) 
             output_G2 = fade_G2(output_G2)
             output_G  = Add()([output_G1, output_G2])
-            # output_G  = l.build(l.D_I[i], output_G, trainable=False)
             output_G3 = AveragePooling2D((2, 2))(output_G)
             output_G3 = l.build(l.D_I[i-1], output_G3, trainable=False)
-            # output_G3 = Lambda(lambda x:x*(1-alpha))(output_G3) 
             output_G3 = fade_G3(output_G3)
             output_G4 = l.build(l.D_I[i], output_G, trainable=False)
             output_G4 = l.build(l.D_A[i-1], output_G4, trainable=False)
-            # output_G4 = Lambda(lambda x:x*(alpha))(output_G4) 
             output_G4 = fade_G4(output_G4)
             output_G  = Add()([output_G3, output_G4])
             for j in range(i-1):
                 output_G = l.build(l.D_A[i-j-2], output_G, trainable=False)
             output_G = l.build(l.D, output_G, trainable=False)
             gan = Model(inputs=input_G, outputs=output_G)
+            gan.compile(loss="binary_crossentropy", \
+                                optimizer=g_opt, metrics=["accuracy"])
         else:
             # 最初の学習モデルを構築
+            l.setTrainableD(True)
             input_D  = Input((4, 4, 3))
             output_D = l.build(l.D_I[0], input_D)
             output_D = l.build(l.D, output_D)
             discriminator = Model(inputs=input_D, outputs=output_D)
             discriminator.compile(loss="binary_crossentropy", \
-                                        optimizer=d_opt, metrics=["accuracy"])
+                                optimizer=d_opt, metrics=["accuracy"])
 
+            l.setTrainableD(False)
             input_G  = Input((512, ))
             output_G = l.build(l.G, input_G)
             output_G = l.build(l.G_O[0], output_G)
@@ -293,16 +295,8 @@ def train():
             output_G = l.build(l.D, output_G)
             gan = Model(inputs=input_G, outputs=output_G)
             gan.compile(loss="binary_crossentropy", \
-                                        optimizer=g_opt, metrics=["accuracy"])
-
-        # コンパイル
-        l.setTrainableD(True)
-        discriminator.compile(loss="binary_crossentropy", \
-                                optimizer=d_opt, metrics=["accuracy"])
-        l.setTrainableD(False)
-        gan.compile(loss="binary_crossentropy", \
                                 optimizer=g_opt, metrics=["accuracy"])
- 
+
         # とりあえず表示
         discriminator.summary() 
         gan.summary()
@@ -340,13 +334,13 @@ def train():
                 # D を更新
                 Xd = np.concatenate((d_images, g_images))
                 yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
+                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=10, batch_size=BATCH_SIZE, verbose=0)
                 d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
                 # G を更新
                 Xg = noize
                 yg = [1]*BATCH_SIZE
-                g_loss = gan.fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
+                g_loss = gan.fit(Xg, yg, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
                 g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
 
                 # D の出力の様子を確認
@@ -369,69 +363,4 @@ def train():
                     imgList.append(generator.predict(noize, verbose=0))
                     combine_images(imgList, i, fadefull, epoch, index)
         
-        """
-        # finished Fade-in
-        # 学習モデルを構築
-        input_D  = Input((4*2**i, 4*2**i, 3))
-        output_D = l.build(l.D_I[i], input_D)
-        for j in range(i):
-            output_D = l.build(l.D_A[i-j-1], output_D)
-        output_D = l.build(l.D, output_D)
-        discriminator = Model(inputs=input_D, outputs=output_D)
-        discriminator.compile(loss="binary_crossentropy", \
-                                    optimizer=d_opt, metrics=["accuracy"])
-
-        input_G  = Input((512, ))
-        output_G = l.build(l.G, input_G)
-        for j in range(i):
-            output_G = l.build(l.G_A[j], output_G)
-        output_G = l.build(l.G_O[i], output_G)
-        output_G = l.build(l.D_I[i], output_G, trainable=False)
-        for j in range(i):
-            output_G = l.build(l.D_A[i-j-1], output_G, trainable=False)
-        output_G = l.build(l.D, output_G, trainable=False)
-        gan = Model(inputs=input_G, outputs=output_G)
-        gan.compile(loss="binary_crossentropy", \
-                                    optimizer=g_opt, metrics=["accuracy"])
-        
-        for epoch in range(NUM_EPOCH):
-            for index in range(num_batches):
-                noize = np.array([np.random.uniform(-1,1,NOIZE_SIZE) for _ in range(BATCH_SIZE)])
-                
-                g_images = generator.predict(noize, verbose=0)
-                d_images = datas[index*BATCH_SIZE:(index+1)*BATCH_SIZE]
-
-                # D を更新
-                Xd = np.concatenate((d_images, g_images))
-                yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=1, batch_size=BATCH_SIZE, verbose=0)
-                d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
-
-                # G を更新
-                Xg = noize
-                yg = [1]*BATCH_SIZE
-                g_loss = gan.fit(Xg, yg, shuffle=False, epochs=2, batch_size=BATCH_SIZE, verbose=0)
-                g_loss = [g_loss.history["loss"][-1],g_loss.history["acc"][-1]]
-
-                # D の出力の様子を確認
-                t   = "full-I:%d, epoch: %d, batch: %d, "
-                t  += "g_loss: [%f, %f], d_loss: [%f, %f], "
-                tp  = [i, epoch, index]
-                tp += g_loss
-                tp += d_loss
-                print(t % tuple(tp))
-                logfile.write((t+"\n") % tuple(tp))
-
-                # 生成画像を出力
-                if index % int(num_batches/2) == 0:
-                    imgList = []
-                    imgList.append(d_images)
-                    imgList.append(generator.predict(noize, verbose=0))
-                    imgList.append(generator.predict(noize, verbose=0))
-                    imgList.append(generator.predict(noize, verbose=0))
-                    combine_images(imgList, i, 1, epoch, index)
-
-
-        """
-
 
