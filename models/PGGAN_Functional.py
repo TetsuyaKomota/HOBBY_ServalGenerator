@@ -269,8 +269,8 @@ def train():
             output_G2 = fade_G2(output_G2)
             output_G  = Add()([output_G1, output_G2])
             """
-            output_G = l.build(l.G_O[i-1], output_G)
             output_G = UpSampling2D((2, 2))(output_G)
+            output_G = l.build(l.G_O[i], output_G)
             
             """
             output_G3 = AveragePooling2D((2, 2))(output_G)
@@ -317,7 +317,7 @@ def train():
 
         for epoch in range(NUM_EPOCH * 2):
             np.random.shuffle(datas)
-            if i > 0:
+            if len(fade_D1.get_weights().shape) > 0 and i > 0:
                 # fade レイヤーの重みを更新する
                 weights_size = 4 * 2**(5-(i-1))
                 alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
