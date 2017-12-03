@@ -29,7 +29,7 @@ from p_setting import G_LR
 from p_setting import G_BETA1
 from p_setting import G_BETA2
 from p_setting import NUM_EPOCH
-from p_setting import BATCH_SIZE
+from p_setting import MAX_BATCH_SIZE
 from p_setting import NOIZE_SIZE
 SAVE_MODEL_PATH = "tmp/save_models/"
 SAVE_NOIZE_PATH = "tmp/save_noizes/"
@@ -66,7 +66,7 @@ class LayerSet:
 
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
-        filters   =  8 * 2**(5-idx)
+        filters   =  2 * 2**(5-idx)
         output = []
         output.append(UpSampling2D((2, 2)))
         output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
@@ -78,7 +78,7 @@ class LayerSet:
         return output
 
     def getAdditionalBlock_D(self, idx):
-        filters   =  8 * 2**(5-idx)
+        filters   =  2 * 2**(5-idx)
         output = []
         output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
@@ -91,13 +91,12 @@ class LayerSet:
     def getOutputBlock_G(self, idx):
         output = []
         output.append(Conv2D(3, (1, 1), padding="same", kernel_initializer="he_normal"))
-        # output.append(Activation("tanh"))
-        output.append(Activation("linear"))
+        output.append(Activation("tanh"))
         return output
 
     # D の入力層を生成
     def getInputBlock_D(self, idx):
-        filters   = 16 * 2**(5-idx)
+        filters   = 4 * 2**(5-idx)
         output = []
         output.append(Conv2D(filters, (1, 1), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
@@ -106,12 +105,12 @@ class LayerSet:
     # 最初のモデルを生成
     def firstModel_G(self):
         output = []
-        output.append(Dense(4*4*512, kernel_initializer="he_normal", kernel_constraint=unit_norm()))
-        output.append(Reshape((4, 4, 512)))
+        output.append(Dense(4*4*128, kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Reshape((4, 4, 128)))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(128, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
         return output
@@ -119,14 +118,13 @@ class LayerSet:
     def firstModel_D(self):
         output = []
         output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
-        output.append(Conv2D(512, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(512, (4, 4), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(128, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         output.append(Flatten())
         output.append(Dense(1))
-        # output.append(Activation("sigmoid"))
-        output.append(Activation("linear"))
+        output.append(Activation("sigmoid"))
         return output
 
     # レイヤーの配列を組み立てる
@@ -203,8 +201,9 @@ def train():
     
     # 小さいモデルから学習する
     for i in range(5+1):
+        BATCH_SIZE = int(MAX_BATCH_SIZE / 2**i)
         # 画像生成用の G をコンパイル
-        input_G  = Input((512, ))
+        input_G  = Input((128, ))
         output_G = l.build(l.G, input_G)
         for j in range(i):
             output_G = l.build(l.G_A[j], output_G)
@@ -224,12 +223,12 @@ def train():
         alpha = 0
         
         # フェードイン用のレイヤーを用意
-        fade_D1 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
-        fade_D2 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_D1 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_D2 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
         fade_G1 = Conv2D(                3, (1, 1), trainable=False)
         fade_G2 = Conv2D(                3, (1, 1), trainable=False)
-        fade_G3 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
-        fade_G4 = Conv2D(16 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_G3 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
+        fade_G4 = Conv2D(4 * 2**(5-(i-1)), (1, 1), trainable=False)
         if i > 0:
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
@@ -251,7 +250,7 @@ def train():
                                 optimizer=d_opt, metrics=["accuracy"])
             
             l.setTrainableD(False)
-            input_G  = Input((512, ))
+            input_G  = Input((128, ))
             output_G = l.build(l.G, input_G)
             for j in range(i-1):
                 output_G = l.build(l.G_A[j], output_G)
@@ -286,7 +285,7 @@ def train():
                                 optimizer=d_opt, metrics=["accuracy"])
 
             l.setTrainableD(False)
-            input_G  = Input((512, ))
+            input_G  = Input((128, ))
             output_G = l.build(l.G, input_G)
             output_G = l.build(l.G_O[0], output_G)
             output_G = l.build(l.D_I[0], output_G)
@@ -303,7 +302,7 @@ def train():
             np.random.shuffle(datas)
             if i > 0:
                 # fade レイヤーの重みを更新する
-                weights_size = 16 * 2**(5-(i-1))
+                weights_size = 4 * 2**(5-(i-1))
                 alpha  = min(alpha + 1.0/NUM_EPOCH, 1)
                 ALPHA1 = np.zeros((1, 1, weights_size, weights_size))
                 ALPHA2 = np.zeros((1, 1, weights_size, weights_size))
