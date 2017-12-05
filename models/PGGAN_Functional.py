@@ -295,15 +295,19 @@ def train():
                 ALPHA1 = np.zeros((1, 1, weights_size, weights_size))
                 ALPHA2 = np.zeros((1, 1, weights_size, weights_size))
                 for k in range(ALPHA1.shape[2]):
-                    ALPHA1[0, 0, k, k] = (1-alpha)
-                    ALPHA2[0, 0, k, k] = alpha
+                    # ALPHA1[0, 0, k, k] = (1-alpha)
+                    # ALPHA2[0, 0, k, k] = alpha
+                    ALPHA1[0, 0, k, k] = 1
+                    ALPHA2[0, 0, k, k] = 0
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
                 ALPHA2 = np.zeros((1, 1, 3, 3))
                 for k in range(ALPHA1.shape[2]):
-                    ALPHA1[0, 0, k, k] = (1-alpha)
-                    ALPHA2[0, 0, k, k] = alpha
+                    # ALPHA1[0, 0, k, k] = (1-alpha)
+                    # ALPHA2[0, 0, k, k] = alpha
+                    ALPHA1[0, 0, k, k] = 1
+                    ALPHA2[0, 0, k, k] = 0
 
                 fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
                 fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
