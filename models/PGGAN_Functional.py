@@ -83,8 +83,10 @@ class LayerSet:
         filters   =  2 * 2**(5-idx)
         output = []
         output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(AveragePooling2D((2, 2)))
         return output
