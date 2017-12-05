@@ -301,8 +301,8 @@ def train():
                 for k in range(ALPHA1.shape[2]):
                     # ALPHA1[0, 0, k, k] = (1-alpha)
                     # ALPHA2[0, 0, k, k] = alpha
-                    ALPHA1[0, 0, k, k] = 1
-                    ALPHA2[0, 0, k, k] = 0
+                    ALPHA1[0, 0, k, k] = 0
+                    ALPHA2[0, 0, k, k] = 1
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
@@ -310,8 +310,8 @@ def train():
                 for k in range(ALPHA1.shape[2]):
                     # ALPHA1[0, 0, k, k] = (1-alpha)
                     # ALPHA2[0, 0, k, k] = alpha
-                    ALPHA1[0, 0, k, k] = 1
-                    ALPHA2[0, 0, k, k] = 0
+                    ALPHA1[0, 0, k, k] = 0
+                    ALPHA2[0, 0, k, k] = 1
 
                 fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
                 fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
