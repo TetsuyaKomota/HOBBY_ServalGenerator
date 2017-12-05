@@ -30,6 +30,7 @@ from p_setting import G_LR
 from p_setting import G_BETA1
 from p_setting import G_BETA2
 from p_setting import NUM_EPOCH
+from p_setting import LOCAL_EPOCH
 from p_setting import MAX_BATCH_SIZE
 from p_setting import NOIZE_SIZE
 SAVE_MODEL_PATH = "tmp/save_models/"
@@ -286,7 +287,6 @@ def train():
         discriminator.summary() 
         gan.summary()
 
-        LOCAL_EPOCH = 10
 
         for epoch in range(NUM_EPOCH * 2):
             np.random.shuffle(datas)
