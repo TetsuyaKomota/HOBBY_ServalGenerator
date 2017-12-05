@@ -11,7 +11,7 @@ from keras.layers.core import Lambda
 from keras.layers.convolutional import UpSampling2D
 from keras.layers.normalization import BatchNormalization
 from keras.layers.advanced_activations import LeakyReLU
-from keras.layers.pooling import AveragePooling2D
+from keras.layers.pooling import AveragePooling2D, MaxPooling2D
 from keras.layers.merge import Add
 from keras.optimizers import Adam
 from keras.constraints import unit_norm
@@ -301,17 +301,17 @@ def train():
                 for k in range(ALPHA1.shape[2]):
                     # ALPHA1[0, 0, k, k] = (1-alpha)
                     # ALPHA2[0, 0, k, k] = alpha
-                    ALPHA1[0, 0, k, k] = 0
-                    ALPHA2[0, 0, k, k] = 1
+                    ALPHA1[0, 0, k, k] = 1
+                    ALPHA2[0, 0, k, k] = 0
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
                 ALPHA2 = np.zeros((1, 1, 3, 3))
                 for k in range(ALPHA1.shape[2]):
-                    # ALPHA1[0, 0, k, k] = (1-alpha)
-                    # ALPHA2[0, 0, k, k] = alpha
-                    ALPHA1[0, 0, k, k] = 0
-                    ALPHA2[0, 0, k, k] = 1
+                    ALPHA1[0, 0, k, k] = (1-alpha)
+                    ALPHA2[0, 0, k, k] = alpha
+                    # ALPHA1[0, 0, k, k] = 0
+                    # ALPHA2[0, 0, k, k] = 1
 
                 fade_G1.set_weights([ALPHA1, fade_G1.get_weights()[1]])
                 fade_G2.set_weights([ALPHA2, fade_G2.get_weights()[1]])
