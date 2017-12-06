@@ -8,6 +8,7 @@
 # from models import HyperAutoEncoder as gan
 # from models import ProgressiveGrowedGAN as gan
 from models import PGGAN_Functional as gan
+# from models import test_PGGAN_Functional as gan
 from setting import IS_RESET_MODEL
 from setting import IS_RESET_NOIZE
 

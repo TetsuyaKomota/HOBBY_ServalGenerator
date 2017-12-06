@@ -71,10 +71,10 @@ class LayerSet:
         filters   =  2 * 2**(5-idx)
         output = []
         output.append(UpSampling2D((2, 2)))
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
         return output
@@ -82,9 +82,9 @@ class LayerSet:
     def getAdditionalBlock_D(self, idx):
         filters   =  2 * 2**(5-idx)
         output = []
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         output.append(AveragePooling2D((2, 2)))
         output.append(Dropout(0.5))
@@ -108,12 +108,12 @@ class LayerSet:
     # 最初のモデルを生成
     def firstModel_G(self):
         output = []
-        output.append(Dense(4*4*128, kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Dense(4*4*128, kernel_initializer="he_normal"))
         output.append(Reshape((4, 4, 128)))
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(128, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal"))
         output.append(Lambda(lambda x:K.l2_normalize(x, axis=3)))
         output.append(LeakyReLU(0.2))
         return output
@@ -121,7 +121,7 @@ class LayerSet:
     def firstModel_D(self):
         output = []
         output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
-        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
+        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(128, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
@@ -298,10 +298,10 @@ def train():
                 ALPHA1 = np.zeros((1, 1, weights_size, weights_size))
                 ALPHA2 = np.zeros((1, 1, weights_size, weights_size))
                 for k in range(ALPHA1.shape[2]):
-                    # ALPHA1[0, 0, k, k] = (1-alpha)
-                    # ALPHA2[0, 0, k, k] = alpha
-                    ALPHA1[0, 0, k, k] = 0
-                    ALPHA2[0, 0, k, k] = 1
+                    ALPHA1[0, 0, k, k] = (1-alpha)
+                    ALPHA2[0, 0, k, k] = alpha
+                    # ALPHA1[0, 0, k, k] = 0
+                    # ALPHA2[0, 0, k, k] = 1
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
