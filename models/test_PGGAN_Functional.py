@@ -244,7 +244,7 @@ def train():
 
         l.setTrainableD(True)
         input_D  = Input((4, 4, 3))
-        output_D = l.build(l.D, output_D)
+        output_D = l.build(l.D, input_D)
         discriminator = Model(inputs=input_D, outputs=output_D)
         discriminator.compile(loss="binary_crossentropy", \
                             optimizer=d_opt, metrics=["accuracy"])
