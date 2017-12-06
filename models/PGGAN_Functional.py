@@ -83,12 +83,11 @@ class LayerSet:
         filters   =  2 * 2**(5-idx)
         output = []
         output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
-        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=unit_norm()))
-        output.append(BatchNormalization())
         output.append(LeakyReLU(0.2))
         output.append(AveragePooling2D((2, 2)))
+        output.append(Dropout(0.5))
         return output
 
     # G の出力層を生成
@@ -301,8 +300,8 @@ def train():
                 for k in range(ALPHA1.shape[2]):
                     # ALPHA1[0, 0, k, k] = (1-alpha)
                     # ALPHA2[0, 0, k, k] = alpha
-                    ALPHA1[0, 0, k, k] = 1
-                    ALPHA2[0, 0, k, k] = 0
+                    ALPHA1[0, 0, k, k] = 0
+                    ALPHA2[0, 0, k, k] = 1
                 fade_D1.set_weights([ALPHA1, fade_D1.get_weights()[1]])
                 fade_D2.set_weights([ALPHA2, fade_D2.get_weights()[1]])
                 ALPHA1 = np.zeros((1, 1, 3, 3))
@@ -325,7 +324,7 @@ def train():
                 # D を更新
                 Xd = np.concatenate((d_images, g_images))
                 yd = [1]*BATCH_SIZE + [0]*BATCH_SIZE
-                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=LOCAL_EPOCH, batch_size=BATCH_SIZE, verbose=0)
+                d_loss = discriminator.fit(Xd, yd, shuffle=False, epochs=LOCAL_EPOCH, batch_size=BATCH_SIZE*2, verbose=0)
                 d_loss = [d_loss.history["loss"][-1],d_loss.history["acc"][-1]]
 
                 # G を更新
