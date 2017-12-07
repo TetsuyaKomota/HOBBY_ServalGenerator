@@ -62,11 +62,11 @@ class LayerSet:
     # D の trainable を変更する
     # フェードインの際に再コンパイルをする必要があるため
     def setTrainableD(self, isTrainable):
-        setTrainable(D, isTrainable)
+        self.setTrainable(self.D, isTrainable)
         for d_i in self.D_I:
-            setTrainable(d_i, isTrainable)
+            self.setTrainable(d_i, isTrainable)
         for d_a in self.D_A:
-            setTrainable(d_a, isTrainable)
+            self.setTrainable(d_a, isTrainable)
 
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
