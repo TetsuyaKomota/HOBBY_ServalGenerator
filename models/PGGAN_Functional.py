@@ -14,7 +14,7 @@ from keras.layers.advanced_activations import LeakyReLU
 from keras.layers.pooling import AveragePooling2D, MaxPooling2D
 from keras.layers.merge import Add
 from keras.optimizers import Adam
-from keras.constraints import unit_norm
+from keras.constraints import unit_norm, max_norm
 
 import math
 import numpy as np
@@ -82,9 +82,9 @@ class LayerSet:
     def getAdditionalBlock_D(self, idx):
         filters   =  2 * 2**(5-idx)
         output = []
-        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=max_norm()))
         output.append(LeakyReLU(0.2))
-        output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(2*filters, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=max_norm()))
         output.append(LeakyReLU(0.2))
         output.append(AveragePooling2D((2, 2)))
         output.append(Dropout(0.5))
@@ -121,7 +121,7 @@ class LayerSet:
     def firstModel_D(self):
         output = []
         output.append(Lambda(lambda x:K.concatenate([K.std(x, axis=3, keepdims=True), x], axis=3)))
-        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal"))
+        output.append(Conv2D(128, (3, 3), padding="same", kernel_initializer="he_normal", kernel_constraint=max_norm()))
         output.append(LeakyReLU(0.2))
         output.append(Conv2D(128, (4, 4), padding="same", kernel_initializer="he_normal"))
         output.append(LeakyReLU(0.2))
