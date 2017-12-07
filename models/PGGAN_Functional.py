@@ -424,6 +424,6 @@ def train():
                         imgList.append(generator.predict(n_sample[MAX_BATCH_SIZE:MAX_BATCH_SIZE+BATCH_SIZE], verbose=0))
                         combine_images(imgList, i, fadefull, epoch, index)
         
-        # 各解像度での学習終了時に重みを保存する
-        l.save(generation, i) 
+            # 各解像度での学習終了時に重みを保存する
+            l.save(generation, i) 
 
