@@ -34,6 +34,8 @@ from p_setting import NUM_EPOCH
 from p_setting import LOCAL_EPOCH
 from p_setting import MAX_BATCH_SIZE
 from p_setting import NOIZE_SIZE
+from p_setting import START_GENERATION
+
 SAVE_MODEL_PATH = "tmp/save_models/"
 SAVE_NOIZE_PATH = "tmp/save_noizes/"
 GENERATED_IMAGE_PATH = "tmp/"
@@ -54,7 +56,7 @@ class LayerSet:
             self.D_I.append(self.getInputBlock_D(i))
         self.G_O.append(self.getOutputBlock_G(5)) 
         self.D_I.append(self.getInputBlock_D(5))
-        self.load()
+        self.load(START_GENERATION, 0)
 
     # レイヤーセットを引数に，trainable を変更する
     def setTrainable(self, layerList, isTrainable):
@@ -144,7 +146,7 @@ class LayerSet:
         return output
 
     # モデルをセーブする
-    def save(self, idx, epoch):
+    def save(self, generation, i):
         output = {}
         output["D"] = []
         for l in self.D:
@@ -174,16 +176,15 @@ class LayerSet:
                 output["G_A"][-1].append(l.get_weights())
         if os.path.exists("tmp/save_models/PGGAN/") == False:
             os.mkdir("tmp/save_models/PGGAN/")
-        with open("tmp/save_models/PGGAN/weights.dill", "wb") as f:
+        with open("tmp/save_models/PGGAN/weights_"+str(generation)+"_"+str(i)+".dill", "wb") as f:
             dill.dump(output, f)
- 
 
     # モデルをロードする
-    def load(self, idx, epoch):
-        if os.path.exists("tmp/save_models/PGGAN/weights.dill") == False:
+    def load(self, generation, i):
+        if os.path.exists("tmp/save_models/PGGAN/weights_"+str(generation)+"_"+str(i)+".dill") == False:
             print("[PGGAN_Functional]load:cannot load wieghts.dill")
             return 
-        with open("tmp/save_models/PGGAN/weights.dill", "rb") as f:
+        with open("tmp/save_models/PGGAN/weights_"+str(generation)+"_"+str(i)+".dill", "rb") as f:
             w = dill.load(f)
         for l in self.D:
             l.set_weights(w["D"].pop(0))
@@ -259,7 +260,7 @@ def train():
     logfile = open("tmp/logdata.txt", "w", encoding="utf-8")
     
     # 小さいモデルから学習する
-    for _ in range(NUM_GENERATION):
+    for generation in range(NUM_GENERATION):
         for i in range(5+1):
             BATCH_SIZE = int(MAX_BATCH_SIZE / 4**i)
             num_batches = int(originals.shape[0] / BATCH_SIZE)
@@ -424,5 +425,5 @@ def train():
                         combine_images(imgList, i, fadefull, epoch, index)
         
         # 各解像度での学習終了時に重みを保存する
-        l.save()    
+        l.save(generation, i) 
 
