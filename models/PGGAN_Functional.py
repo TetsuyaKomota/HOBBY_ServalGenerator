@@ -54,17 +54,19 @@ class LayerSet:
         self.G_O.append(self.getOutputBlock_G(5)) 
         self.D_I.append(self.getInputBlock_D(5))
 
+    # レイヤーセットを引数に，trainable を変更する
+    def setTrainable(self, layerList, isTrainable):
+        for l in layerList:
+            l.trainable = isTrainable
+
     # D の trainable を変更する
     # フェードインの際に再コンパイルをする必要があるため
     def setTrainableD(self, isTrainable):
-        DList  = []
-        DList += self.D
-        for b in self.D_I:
-            DList += b
-        for b in self.D_A:
-            DList += b
-        for l in DList:
-            l.trainable = isTrainable
+        setTrainable(D, isTrainable)
+        for d_i in self.D_I:
+            setTrainable(d_i, isTrainable)
+        for d_a in self.D_A:
+            setTrainable(d_a, isTrainable)
 
     # 3層追加メソッド
     def getAdditionalBlock_G(self, idx):
@@ -227,9 +229,13 @@ def train():
             # running Fade-in
             # alpha を調節しながら学習する為，エポックごとにコンパイルする
             # 画像生成用の G をコンパイル
+            # 学習済みのレイヤーは trainable=False
+            l.setTrainable(l.G_O[i-1], False)
             input_G  = Input((128, ))
             output_G = l.build(l.G, input_G)
             for j in range(i-1):
+                # 学習済みのレイヤーは trainable=False
+                l.setTrainable(l.G_A[j], False)
                 output_G = l.build(l.G_A[j], output_G)
             output_G1 = l.build(l.G_O[i-1], output_G)
             output_G1 = UpSampling2D((2, 2))(output_G1)
@@ -243,6 +249,8 @@ def train():
             
             # 学習モデルを構築
             l.setTrainableD(True)
+            # 学習済みのレイヤーは trainable=False
+            l.setTrainable(l.D_I[i-1], False)
             input_D   = Input((4*2**i, 4*2**i, 3))
             output_D1 = AveragePooling2D((2, 2))(input_D)
             output_D1 = l.build(l.D_I[i-1], output_D1)
@@ -252,6 +260,8 @@ def train():
             output_D2 = fade_D2(output_D2)
             output_D  = Add()([output_D1, output_D2])
             for j in range(i-1):
+                # 学習済みのレイヤーは trainable=False
+                l.setTrainable(l.D_A[i-j-2], False)
                 output_D = l.build(l.D_A[i-j-2], output_D)
             output_D = l.build(l.D, output_D)
             discriminator = Model(inputs=input_D, outputs=output_D)
