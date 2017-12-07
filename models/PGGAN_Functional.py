@@ -29,6 +29,7 @@ from p_setting import D_BETA2
 from p_setting import G_LR
 from p_setting import G_BETA1
 from p_setting import G_BETA2
+from p_setting import NUM_GENERATION
 from p_setting import NUM_EPOCH
 from p_setting import LOCAL_EPOCH
 from p_setting import MAX_BATCH_SIZE
@@ -356,14 +357,14 @@ def train():
             # 各解像度の学習回数
             # 高解像度の時ほど学習回数を多くしている
             # 2倍にしているのは fade_in と full の分
-            local_epoch = NUM_EPOCH * 2 * (i+1)
-            for epoch in range(local_epoch):
+            num_epoch = NUM_EPOCH * 2 * (i+1)
+            for epoch in range(num_epoch):
                 np.random.shuffle(datas)
                 if len(fade_D1.get_weights()) > 0 and i > 0:
                     # fade レイヤーの重みを更新する
                     weights_size = 4 * 2**(5-(i-1))
                     # local_epoch/2 の時に alpha=1 に固定される
-                    alpha  = min(alpha + 2.0/local_epoch, 1)
+                    alpha  = min(alpha + 2.0/num_epoch, 1)
                     ALPHA1 = np.zeros((1, 1, weights_size, weights_size))
                     ALPHA2 = np.zeros((1, 1, weights_size, weights_size))
                     for k in range(ALPHA1.shape[2]):
